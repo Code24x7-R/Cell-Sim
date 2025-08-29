@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolutionary Cellular Colony Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #1a1a2e;
+            color: #e6e6e6;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #16213e 0%, #0f3460 100%);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #4cc9f0, #4361ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .simulation-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #simulation {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            width: 320px;
+            background: rgba(13, 23, 42, 0.9);
+            padding: 1rem;
+            overflow-y: auto;
+            border-left: 1px solid #2d3748;
+        }
+        
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            color: #4cc9f0;
+            border-bottom: 1px solid #2d3748;
+            padding-bottom: 0.5rem;
+        }
+        
+        .slider-container {
+            margin-bottom: 0.8rem;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            -webkit-appearance: none;
+            background: #2d3748;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4cc9f0;
+            cursor: pointer;
+        }
+        
+        button {
+            width: 100%;
+            padding: 0.7rem;
+            margin: 0.3rem 0;
+            background: #4361ee;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #3a56d4;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-box {
+            background: rgba(45, 55, 72, 0.5);
+            padding: 0.7rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4cc9f0;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .colony-indicator {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+        
+        .color-box {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.5rem;
+            border-radius: 3px;
+        }
+        
+        .environment {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.7rem;
+            border-radius: 8px;
+            z-index: 5;
+        }
+        
+        .time-display {
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        .sun-moon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 0.5rem auto;
+            background: #ffdd00;
+            box-shadow: 0 0 20px #ffdd00;
+        }
+        
+        .moon {
+            background: #e6e6e6;
+            box-shadow: 0 0 20px #e6e6e6;
+        }
+        
+        .mutation-indicator {
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            padding: 0.2rem;
+            border-radius: 3px;
+            background: rgba(76, 201, 240, 0.2);
+        }
+        
+        .abilities {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .ability {
+            font-size: 0.8rem;
+            padding: 0.3rem;
+            background: rgba(67, 97, 238, 0.2);
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        .event-log {
+            height: 100px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .event {
+            margin-bottom: 0.2rem;
+            padding: 0.2rem;
+            border-left: 2px solid #4cc9f0;
+        }
+        
+        .multicellular-stats {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(45, 55, 72, 0.3);
+            border-radius: 4px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #2d3748;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            background: rgba(45, 55, 72, 0.3);
+            margin-right: 0.2rem;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .tab.active {
+            background: rgba(67, 97, 238, 0.3);
+            border-bottom: 2px solid #4cc9f0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .adaptation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .adaptation {
+            font-size: 0.8rem;
+            padding: 0.5rem;
+            background: rgba(45, 55, 72, 0.5);
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .adaptation.active {
+            background: rgba(58, 236, 109, 0.2);
+            border: 1px solid #3aec6d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Evolutionary Cellular Colony Simulator</h1>
+            <div class="subtitle">Modeling complex evolutionary adaptations in competing colonies</div>
+        </header>
+        
+        <div class="main-content">
+            <div class="simulation-container">
+                <div id="simulation"></div>
+                
+                <div class="environment">
+                    <div class="time-display">Cycle: Day</div>
+                    <div class="sun-moon"></div>
+                    <div>Time: 08:00</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="tab-container">
+                    <div class="tab active" data-tab="controls">Controls</div>
+                    <div class="tab" data-tab="stats">Statistics</div>
+                    <div class="tab" data-tab="adaptations">Adaptations</div>
+                </div>
+                
+                <div class="tab-content active" id="controls-tab">
+                    <div class="control-group">
+                        <div class="control-title">Simulation Controls</div>
+                        <button id="pause-btn">Pause</button>
+                        <button id="reset-btn">Reset Simulation</button>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Simulation Speed</span>
+                                <span id="speed-value">1.0x</span>
+                            </div>
+                            <input type="range" id="speed-slider" min="0.5" max="5" step="0.5" value="1">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-title">Environment Settings</div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Light Intensity</span>
+                                <span id="light-value">70%</span>
+                            </div>
+                            <input type="range" id="light-slider" min="0" max="100" value="70">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Food Spawn Rate</span>
+                                <span id="food-value">50%</span>
+                            </div>
+                            <input type="range" id="food-slider" min="0" max="100" value="50">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Mutation Rate</span>
+                                <span id="mutation-value">5%</span>
+                            </div>
+                            <input type="range" id="mutation-slider" min="0" max="20" value="5">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Cooperation Chance</span>
+                                <span id="cooperation-value">10%</span>
+                            </div>
+                            <input type="range" id="cooperation-slider" min="0" max="50" value="10">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Predator Pressure</span>
+                                <span id="predator-value">15%</span>
+                            </div>
+                            <input type="range" id="predator-slider" min="0" max="50" value="15">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-title">Colonies</div>
+                        
+                        <div class="colony-indicator">
+                            <div class="color-box" style="background: #ff3e3e;"></div>
+                            <div>Red Colony: <span id="red-count">12</span></div>
+                        </div>
+                        <div class="mutation-indicator">
+                            Adaptations: <span id="red-adaptations">0</span>
+                        </div>
+                        
+                        <div class="colony-indicator">
+                            <div class="color-box" style="background: #4cc9f0;"></div>
+                            <div>Blue Colony: <span id="blue-count">15</span></div>
+                        </div>
+                        <div class="mutation-indicator">
+                            Adaptations: <span id="blue-adaptations">0</span>
+                        </div>
+                        
+                        <div class="colony-indicator">
+                            <div class="color-box" style="background: #3aec6d;"></div>
+                            <div>Green Colony: <span id="green-count">8</span></div>
+                        </div>
+                        <div class="mutation-indicator">
+                            Adaptations: <span id="green-adaptations">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="stats-tab">
+                    <div class="control-group">
+                        <div class="control-title">Population Statistics</div>
+                        
+                        <div class="stats">
+                            <div class="stat-box">
+                                <div class="stat-value" id="total-cells">35</div>
+                                <div class="stat-label">Total Cells</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="food-count">22</div>
+                                <div class="stat-label">Food Particles</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="sim-time">0</div>
+                                <div class="stat-label">Sim Time</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="cycle-count">1</div>
+                                <div class="stat-label">Cycles</div>
+                            </div>
+                        </div>
+                        
+                        <div class="multicellular-stats">
+                            <div class="stat-label">Multicellular Organisms</div>
+                            <div class="stat-value" id="organism-count">0</div>
+                            <div class="stat-label">Largest Organism: <span id="largest-organism">0</span> cells</div>
+                            <div class="stat-label">Biofilms: <span id="biofilm-count">0</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-title">Reproduction Statistics</div>
+                        
+                        <div class="stats">
+                            <div class="stat-box">
+                                <div class="stat-value" id="sexual-reproduction">0</div>
+                                <div class="stat-label">Sexual Events</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="fragmentation">0</div>
+                                <div class="stat-label">Fragmentation</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="spore-count">0</div>
+                                <div class="stat-label">Spores Produced</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="specialized-cells">0</div>
+                                <div class="stat-label">Specialized Cells</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="adaptations-tab">
+                    <div class="control-group">
+                        <div class="control-title">Evolved Adaptations</div>
+                        
+                        <div class="adaptation-grid">
+                            <div class="adaptation" id="adhesion-adapt">Adhesion</div>
+                            <div class="adaptation" id="biofilm-adapt">Biofilm Formation</div>
+                            <div class="adaptation" id="skeleton-adapt">External Skeleton</div>
+                            <div class="adaptation" id="specialization-adapt">Cell Specialization</div>
+                            <div class="adaptation" id="digestive-adapt">Digestive System</div>
+                            <div class="adaptation" id="transport-adapt">Transport System</div>
+                            <div class="adaptation" id="sexual-adapt">Sexual Reproduction</div>
+                            <div class="adaptation" id="spore-adapt">Spore Production</div>
+                            <div class="adaptation" id="communication-adapt">Cell Communication</div>
+                            <div class="adaptation" id="homeostasis-adapt">Homeostasis</div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-title">Adaptation Details</div>
+                        <div id="adaptation-details" style="font-size: 0.8rem; padding: 0.5rem; background: rgba(45,55,72,0.3); border-radius: 4px;">
+                            Select an adaptation to view details
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">Event Log</div>
+                    <div class="event-log" id="event-log">
+                        <div class="event">Simulation started</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main Three.js variables
+        let scene, camera, renderer;
+        let cells = [];
+        let foodParticles = [];
+        let toxins = [];
+        let multicellularOrganisms = [];
+        let biofilms = [];
+        let simulationPaused = false;
+        let simulationSpeed = 1;
+        let simTime = 0;
+        let cycleCount = 1;
+        let dayTime = true;
+        let timeOfDay = 8; // 8 AM
+        let mutationRate = 5; // 5% chance
+        let cooperationChance = 10; // 10% chance
+        let predatorPressure = 15; // 15% chance
+        let eventLog = [];
+        
+        // Statistics
+        let stats = {
+            sexualReproduction: 0,
+            fragmentation: 0,
+            sporeProduction: 0,
+            specializedCells: 0
+        };
+        
+        // Colony counts and adaptations
+        const colonyCounts = {
+            red: 12,
+            blue: 15,
+            green: 8
+        };
+        
+        const colonyOrganisms = {
+            red: 0,
+            blue: 0,
+            green: 0
+        };
+        
+        const colonyAdaptations = {
+            red: new Set(),
+            blue: new Set(),
+            green: new Set()
+        };
+        
+        // Available adaptations
+        const allAdaptations = [
+            {
+                id: "adhesion",
+                name: "Specialized Adhesion",
+                description: "Cells produce adhesion proteins allowing them to form stable multicellular structures",
+                effect: (cell) => { cell.userData.adhesionStrength = 2.0; }
+            },
+            {
+                id: "biofilm",
+                name: "Biofilm Formation",
+                description: "Cells secrete extracellular matrix forming protective biofilms",
+                effect: (cell) => { cell.userData.biofilmProduction = true; }
+            },
+            {
+                id: "skeleton",
+                name: "External Skeleton",
+                description: "Cells develop protective external structures for defense",
+                effect: (cell) => { 
+                    cell.userData.defense += 30; 
+                    cell.userData.speed *= 0.8; // Slower movement due to skeleton
+                }
+            },
+            {
+                id: "specialization",
+                name: "Cell Specialization",
+                description: "Cells differentiate into specialized types with specific functions",
+                effect: (cell) => { 
+                    cell.userData.specialization = "basic";
+                    cell.userData.canSpecialize = true;
+                }
+            },
+            {
+                id: "digestive",
+                name: "Digestive System",
+                description: "Development of specialized cells for efficient nutrient breakdown",
+                effect: (cell) => { cell.userData.nutrientAbsorption *= 1.5; }
+            },
+            {
+                id: "transport",
+                name: "Internal Transport",
+                description: "Cells develop channels for nutrient distribution throughout colonies",
+                effect: (cell) => { cell.userData.nutrientSharing = true; }
+            },
+            {
+                id: "sexual",
+                name: "Sexual Reproduction",
+                description: "Ability to exchange genetic material through conjugation",
+                effect: (cell) => { cell.userData.canConjugate = true; }
+            },
+            {
+                id: "spore",
+                name: "Spore Production",
+                description: "Ability to form durable spores for survival in harsh conditions",
+                effect: (cell) => { cell.userData.canSporulate = true; }
+            },
+            {
+                id: "communication",
+                name: "Cell Communication",
+                description: "Cells develop signaling mechanisms to coordinate behavior",
+                effect: (cell) => { cell.userData.communicationRange = 5.0; }
+            },
+            {
+                id: "homeostasis",
+                name: "Homeostasis",
+                description: "Ability to maintain internal stability in changing environments",
+                effect: (cell) => { cell.userData.environmentResistance += 20; }
+            }
+        ];
+        
+        // Initialize the simulation
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth - 320, window.innerHeight - 100);
+            renderer.setClearColor(0x1a1a2e, 1);
+            document.getElementById('simulation').appendChild(renderer.domElement);
+            
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            
+            // Add directional light (sun/moon)
+            const directionalLight = new THREE.DirectionalLight(0xffdd00, 1);
+            directionalLight.position.set(50, 50, 50);
+            scene.add(directionalLight);
+            
+            // Create initial cells for each colony
+            createColony('red', 12);
+            createColony('blue', 15);
+            createColony('green', 8);
+            
+            // Create initial food
+            spawnFood(20);
+            
+            // Add event listeners for controls
+            document.getElementById('pause-btn').addEventListener('click', togglePause);
+            document.getElementById('reset-btn').addEventListener('click', resetSimulation);
+            document.getElementById('speed-slider').addEventListener('input', updateSimulationSpeed);
+            
+            document.getElementById('light-slider').addEventListener('input', updateLightIntensity);
+            document.getElementById('food-slider').addEventListener('input', updateFoodSpawnRate);
+            document.getElementById('mutation-slider').addEventListener('input', updateMutationRate);
+            document.getElementById('cooperation-slider').addEventListener('input', updateCooperationChance);
+            document.getElementById('predator-slider').addEventListener('input', updatePredatorPressure);
+            
+            // Tab functionality
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Adaptation details
+            document.querySelectorAll('.adaptation').forEach(adapt => {
+                adapt.addEventListener('click', () => {
+                    const adaptation = allAdaptations.find(a => a.id === adapt.id.replace('-adapt', ''));
+                    if (adaptation) {
+                        document.getElementById('adaptation-details').innerHTML = `
+                            <strong>${adaptation.name}</strong><br>
+                            ${adaptation.description}
+                        `;
+                    }
+                });
+            });
+            
+            // Start animation loop
+            animate();
+            
+            // Start simulation logic loop
+            setInterval(updateSimulation, 100);
+            
+            // Log initial event
+            addEvent("Simulation started with three competing colonies");
+        }
+        
+        // Create cells for a colony
+        function createColony(color, count) {
+            const colonyColors = {
+                red: 0xff3e3e,
+                blue: 0x4cc9f0,
+                green: 0x3aec6d
+            };
+            
+            for (let i = 0; i < count; i++) {
+                const geometry = new THREE.SphereGeometry(1, 16, 16);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: colonyColors[color],
+                    shininess: 50
+                });
+                
+                const cell = new THREE.Mesh(geometry, material);
+                
+                // Random position within a defined area for each colony
+                if (color === 'red') {
+                    cell.position.x = Math.random() * 20 - 30;
+                    cell.position.y = Math.random() * 20 - 10;
+                } else if (color === 'blue') {
+                    cell.position.x = Math.random() * 20;
+                    cell.position.y = Math.random() * 20;
+                } else {
+                    cell.position.x = Math.random() * 20 + 10;
+                    cell.position.y = Math.random() * 20 - 30;
+                }
+                
+                cell.userData = {
+                    type: 'cell',
+                    colony: color,
+                    health: 100,
+                    energy: 50 + Math.random() * 50,
+                    age: 0,
+                    maxAge: 500 + Math.floor(Math.random() * 500),
+                    speed: 0.1 + Math.random() * 0.2,
+                    size: 1,
+                    defense: 10,
+                    nutrientAbsorption: 1.0,
+                    environmentResistance: 10,
+                    adhesionStrength: 1.0,
+                    communicationRange: 0,
+                    biofilmProduction: false,
+                    canSpecialize: false,
+                    specialization: 'basic',
+                    nutrientSharing: false,
+                    canConjugate: false,
+                    canSporulate: false,
+                    inOrganism: false,
+                    organismId: null,
+                    inBiofilm: false,
+                    biofilmId: null
+                };
+                
+                scene.add(cell);
+                cells.push(cell);
+            }
+        }
+        
+        // Spawn food particles
+        function spawnFood(count) {
+            for (let i = 0; i < count; i++) {
+                const geometry = new THREE.SphereGeometry(0.5, 12, 12);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0xf2e86d,
+                    shininess: 30
+                });
+                
+                const food = new THREE.Mesh(geometry, material);
+                
+                food.position.x = Math.random() * 80 - 40;
+                food.position.y = Math.random() * 80 - 40;
+                food.position.z = Math.random() * 10 - 5;
+                
+                food.userData = {
+                    type: 'food',
+                    energy: 20 + Math.random() * 30
+                };
+                
+                scene.add(food);
+                foodParticles.push(food);
+            }
+            
+            document.getElementById('food-count').textContent = foodParticles.length;
+        }
+        
+        // Update simulation logic
+        function updateSimulation() {
+            if (simulationPaused) return;
+            
+            // Update time of day and day/night cycle
+            updateTime();
+            
+            // Move cells and update their state
+            cells.forEach(cell => {
+                // Age the cell
+                cell.userData.age += 0.1 * simulationSpeed;
+                
+                // Consume energy
+                cell.userData.energy -= 0.05 * simulationSpeed;
+                
+                // Apply environmental effects
+                applyEnvironmentalEffects(cell);
+                
+                // If cell is part of an organism, let the organism handle movement
+                if (cell.userData.inOrganism) {
+                    const organism = multicellularOrganisms.find(o => o.id === cell.userData.organismId);
+                    if (organism) {
+                        // Specialized cells have special functions
+                        if (cell.userData.specialization === 'digestive' && Math.random() < 0.1) {
+                            // Digestive cells can extract energy from nearby food
+                            for (let i = foodParticles.length - 1; i >= 0; i--) {
+                                const food = foodParticles[i];
+                                if (cell.position.distanceTo(food.position) < 2.5) {
+                                    organism.energy += food.userData.energy * cell.userData.nutrientAbsorption;
+                                    scene.remove(food);
+                                    foodParticles.splice(i, 1);
+                                    document.getElementById('food-count').textContent = foodParticles.length;
+                                    break;
+                                }
+                            }
+                        }
+                        return; // Skip individual movement for cells in organisms
+                    } else {
+                        // Organism doesn't exist anymore, free the cell
+                        cell.userData.inOrganism = false;
+                        cell.userData.organismId = null;
+                    }
+                }
+                
+                // If cell is in a biofilm, different rules apply
+                if (cell.userData.inBiofilm) {
+                    handleBiofilmBehavior(cell);
+                    return;
+                }
+                
+                // Move toward food or random direction
+                if (Math.random() < 0.7 && foodParticles.length > 0) {
+                    // Find closest food
+                    let closestFood = null;
+                    let closestDistance = Infinity;
+                    
+                    foodParticles.forEach(food => {
+                        const distance = cell.position.distanceTo(food.position);
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestFood = food;
+                        }
+                    });
+                    
+                    if (closestFood) {
+                        // Move toward food
+                        const direction = new THREE.Vector3()
+                            .subVectors(closestFood.position, cell.position)
+                            .normalize();
+                        
+                        cell.position.add(direction.multiplyScalar(cell.userData.speed * simulationSpeed));
+                    }
+                } else {
+                    // Random movement
+                    cell.position.x += (Math.random() - 0.5) * cell.userData.speed * simulationSpeed;
+                    cell.position.y += (Math.random() - 0.5) * cell.userData.speed * simulationSpeed;
+                }
+                
+                // Check for food consumption
+                for (let i = foodParticles.length - 1; i >= 0; i--) {
+                    const food = foodParticles[i];
+                    if (cell.position.distanceTo(food.position) < 1.5) {
+                        cell.userData.energy += food.userData.energy * cell.userData.nutrientAbsorption;
+                        scene.remove(food);
+                        foodParticles.splice(i, 1);
+                        document.getElementById('food-count').textContent = foodParticles.length;
+                        break;
+                    }
+                }
+                
+                // Check for cell interactions
+                cells.forEach(otherCell => {
+                    if (cell !== otherCell && cell.position.distanceTo(otherCell.position) < 2.5) {
+                        handleCellInteractions(cell, otherCell);
+                    }
+                });
+                
+                // Check for reproduction
+                if (cell.userData.energy > 150 && !cell.userData.inOrganism && !cell.userData.inBiofilm) {
+                    reproduceCell(cell);
+                }
+                
+                // Check for death
+                if (cell.userData.energy <= 0 || cell.userData.age > cell.userData.maxAge) {
+                    handleCellDeath(cell);
+                }
+            });
+            
+            // Update multicellular organisms
+            updateMulticellularOrganisms();
+            
+            // Update biofilms
+            updateBiofilms();
+            
+            // Occasionally spawn new food
+            if (Math.random() < 0.05 * simulationSpeed) {
+                spawnFood(1);
+            }
+            
+            // Update stats
+            simTime += 0.1 * simulationSpeed;
+            updateStatistics();
+        }
+        
+        // Handle cell interactions
+        function handleCellInteractions(cell, otherCell) {
+            // Check for predation
+            if (Math.random() < predatorPressure / 100 && 
+                cell.userData.colony !== otherCell.userData.colony) {
+                
+                // Attack success depends on defense
+                const attackSuccess = Math.random() < (cell.userData.defense / (cell.userData.defense + otherCell.userData.defense));
+                
+                if (attackSuccess) {
+                    // Predator consumes prey
+                    cell.userData.energy += otherCell.userData.energy * 0.5;
+                    
+                    // Remove prey
+                    scene.remove(otherCell);
+                    cells.splice(cells.indexOf(otherCell), 1);
+                    colonyCounts[otherCell.userData.colony]--;
+                    updateColonyCounts();
+                    
+                    addEvent(`A ${cell.userData.colony} cell consumed a ${otherCell.userData.colony} cell!`);
+                }
+            }
+            
+            // Check for cooperation and multicellular formation
+            if (cell.userData.colony === otherCell.userData.colony &&
+                cell.userData.adhesionStrength > 1.0 &&
+                otherCell.userData.adhesionStrength > 1.0 &&
+                Math.random() < cooperationChance / 100 &&
+                !cell.userData.inOrganism && !otherCell.userData.inOrganism) {
+                
+                formMulticellularOrganism(cell, otherCell);
+            }
+            
+            // Check for biofilm formation
+            if (cell.userData.colony === otherCell.userData.colony &&
+                cell.userData.biofilmProduction &&
+                otherCell.userData.biofilmProduction &&
+                Math.random() < 0.05 &&
+                !cell.userData.inBiofilm && !otherCell.userData.inBiofilm) {
+                
+                formBiofilm(cell, otherCell);
+            }
+            
+            // Check for conjugation (sexual reproduction)
+            if (cell.userData.colony === otherCell.userData.colony &&
+                cell.userData.canConjugate &&
+                otherCell.userData.canConjugate &&
+                Math.random() < 0.01) {
+                
+                conjugateCells(cell, otherCell);
+            }
+        }
+        
+        // Handle cell reproduction
+        function reproduceCell(cell) {
+            cell.userData.energy /= 2;
+            
+            const geometry = new THREE.SphereGeometry(cell.userData.size, 16, 16);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: cell.material.color
+            });
+            
+            const newCell = new THREE.Mesh(geometry, material);
+            newCell.position.copy(cell.position);
+            newCell.position.x += (Math.random() - 0.5) * 2;
+            newCell.position.y += (Math.random() - 0.5) * 2;
+            
+            newCell.userData = {...cell.userData};
+            newCell.userData.energy = cell.userData.energy;
+            newCell.userData.age = 0;
+            
+            // Chance to mutate
+            if (Math.random() < mutationRate / 100) {
+                mutateCell(newCell);
+            }
+            
+            scene.add(newCell);
+            cells.push(newCell);
+            colonyCounts[cell.userData.colony]++;
+            updateColonyCounts();
+        }
+        
+        // Handle cell death
+        function handleCellDeath(cell) {
+            // If cell is part of an organism, remove it from the organism
+            if (cell.userData.inOrganism) {
+                const organism = multicellularOrganisms.find(o => o.id === cell.userData.organismId);
+                if (organism) {
+                    organism.cells = organism.cells.filter(c => c !== cell);
+                    organism.energy -= 20;
+                    
+                    if (organism.cells.length === 0) {
+                        // Organism died
+                        multicellularOrganisms = multicellularOrganisms.filter(o => o.id !== organism.id);
+                        colonyOrganisms[cell.userData.colony]--;
+                        updateOrganismCounts();
+                    }
+                }
+            }
+            
+            // If cell is in a biofilm, remove it from the biofilm
+            if (cell.userData.inBiofilm) {
+                const biofilm = biofilms.find(b => b.id === cell.userData.biofilmId);
+                if (biofilm) {
+                    biofilm.cells = biofilm.cells.filter(c => c !== cell);
+                    
+                    if (biofilm.cells.length === 0) {
+                        // Biofilm dissolved
+                        biofilms = biofilms.filter(b => b.id !== biofilm.id);
+                        document.getElementById('biofilm-count').textContent = biofilms.length;
+                    }
+                }
+            }
+            
+            // Check for spore formation before death
+            if (cell.userData.canSporulate && Math.random() < 0.3) {
+                produceSpores(cell);
+                stats.sporeProduction++;
+            }
+            
+            scene.remove(cell);
+            cells.splice(cells.indexOf(cell), 1);
+            colonyCounts[cell.userData.colony]--;
+            updateColonyCounts();
+            
+            // Sometimes spawn food when a cell dies
+            if (Math.random() < 0.3) {
+                spawnFood(1);
+            }
+        }
+        
+        // Form a multicellular organism from two cells
+        function formMulticellularOrganism(cell1, cell2) {
+            const organismId = multicellularOrganisms.length + 1;
+            const organism = {
+                id: organismId,
+                colony: cell1.userData.colony,
+                cells: [cell1, cell2],
+                energy: cell1.userData.energy + cell2.userData.energy,
+                position: new THREE.Vector3(
+                    (cell1.position.x + cell2.position.x) / 2,
+                    (cell1.position.y + cell2.position.y) / 2,
+                    (cell1.position.z + cell2.position.z) / 2
+                ),
+                speed: 0.05,
+                age: 0
+            };
+            
+            // Mark cells as part of organism
+            cell1.userData.inOrganism = true;
+            cell1.userData.organismId = organismId;
+            cell2.userData.inOrganism = true;
+            cell2.userData.organismId = organismId;
+            
+            // Specialize cells if they have the ability
+            if (cell1.userData.canSpecialize) {
+                cell1.userData.specialization = 'digestive';
+                cell1.material.color.set(0xff9900); // Orange for digestive cells
+                stats.specializedCells++;
+            }
+            if (cell2.userData.canSpecialize) {
+                cell2.userData.specialization = 'sensory';
+                cell2.material.color.set(0x9900ff); // Purple for sensory cells
+                stats.specializedCells++;
+            }
+            
+            multicellularOrganisms.push(organism);
+            colonyOrganisms[cell1.userData.colony]++;
+            updateOrganismCounts();
+            
+            addEvent(`A new multicellular organism formed in the ${cell1.userData.colony} colony!`);
+        }
+        
+        // Form a biofilm
+        function formBiofilm(cell1, cell2) {
+            const biofilmId = biofilms.length + 1;
+            const biofilm = {
+                id: biofilmId,
+                colony: cell1.userData.colony,
+                cells: [cell1, cell2],
+                position: new THREE.Vector3(
+                    (cell1.position.x + cell2.position.x) / 2,
+                    (cell1.position.y + cell2.position.y) / 2,
+                    (cell1.position.z + cell2.position.z) / 2
+                ),
+                energy: 0,
+                defense: 30
+            };
+            
+            // Mark cells as part of biofilm
+            cell1.userData.inBiofilm = true;
+            cell1.userData.biofilmId = biofilmId;
+            cell2.userData.inBiofilm = true;
+            cell2.userData.biofilmId = biofilmId;
+            
+            // Change appearance to indicate biofilm
+            cell1.material.color.set(0x888888);
+            cell2.material.color.set(0x888888);
+            
+            biofilms.push(biofilm);
+            document.getElementById('biofilm-count').textContent = biofilms.length;
+            
+            addEvent(`A new biofilm formed in the ${cell1.userData.colony} colony!`);
+        }
+        
+        // Conjugate cells (sexual reproduction)
+        function conjugateCells(cell1, cell2) {
+            // Exchange genetic material
+            const tempAdaptations = {...cell1.userData};
+            
+            // 50% chance to transfer each adaptation
+            for (const key in cell2.userData) {
+                if (Math.random() < 0.5) {
+                    cell1.userData[key] = cell2.userData[key];
+                }
+            }
+            
+            for (const key in tempAdaptations) {
+                if (Math.random() < 0.5) {
+                    cell2.userData[key] = tempAdaptations[key];
+                }
+            }
+            
+            stats.sexualReproduction++;
+            document.getElementById('sexual-reproduction').textContent = stats.sexualReproduction;
+            
+            addEvent(`Cells in the ${cell1.userData.colony} colony exchanged genetic material!`);
+        }
+        
+        // Produce spores
+        function produceSpores(cell) {
+            // Create 3-5 spores around the dying cell
+            const sporeCount = 3 + Math.floor(Math.random() * 3);
+            
+            for (let i = 0; i < sporeCount; i++) {
+                const geometry = new THREE.SphereGeometry(0.7, 12, 12);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0xaaaaaa,
+                    shininess: 10
+                });
+                
+                const spore = new THREE.Mesh(geometry, material);
+                spore.position.copy(cell.position);
+                spore.position.x += (Math.random() - 0.5) * 3;
+                spore.position.y += (Math.random() - 0.5) * 3;
+                
+                spore.userData = {
+                    type: 'spore',
+                    colony: cell.userData.colony,
+                    energy: 10,
+                    age: 0,
+                    maxAge: 1000,
+                    willGerminate: Math.random() < 0.7
+                };
+                
+                scene.add(spore);
+                cells.push(spore);
+            }
+            
+            document.getElementById('spore-count').textContent = stats.sporeProduction;
+            
+            addEvent(`A ${cell.userData.colony} cell produced spores before dying!`);
+        }
+        
+        // Handle biofilm behavior
+        function handleBiofilmBehavior(cell) {
+            const biofilm = biofilms.find(b => b.id === cell.userData.biofilmId);
+            if (!biofilm) {
+                cell.userData.inBiofilm = false;
+                cell.userData.biofilmId = null;
+                return;
+            }
+            
+            // Biofilm cells move very slowly
+            if (Math.random() < 0.01) {
+                cell.position.x += (Math.random() - 0.5) * 0.1;
+                cell.position.y += (Math.random() - 0.5) * 0.1;
+            }
+            
+            // Biofilm cells share nutrients
+            if (cell.userData.nutrientSharing && biofilm.cells.length > 1) {
+                const totalEnergy = biofilm.cells.reduce((sum, c) => sum + c.userData.energy, 0);
+                const averageEnergy = totalEnergy / biofilm.cells.length;
+                
+                biofilm.cells.forEach(c => {
+                    c.userData.energy = averageEnergy;
+                });
+            }
+            
+            // Biofilm cells can absorb nutrients from environment
+            if (Math.random() < 0.05) {
+                cell.userData.energy += 0.1;
+            }
+        }
+        
+        // Apply environmental effects
+        function applyEnvironmentalEffects(cell) {
+            // Day/night cycle affects photosynthetic cells
+            if (cell.userData.specialization === 'digestive' && dayTime) {
+                cell.userData.energy += 0.05;
+            }
+            
+            // Toxin damage
+            if (toxins.length > 0 && Math.random() < 0.01) {
+                const damage = 5 - (cell.userData.environmentResistance / 10);
+                cell.userData.energy -= Math.max(1, damage);
+            }
+            
+            // Temperature effects (simulated)
+            if (timeOfDay > 12 && timeOfDay < 15) {
+                // Midday heat
+                cell.userData.energy -= 0.02;
+            } else if (timeOfDay > 0 && timeOfDay < 6) {
+                // Cold night
+                cell.userData.energy -= 0.01;
+            }
+        }
+        
+        // Update multicellular organisms
+        function updateMulticellularOrganisms() {
+            multicellularOrganisms.forEach(organism => {
+                // Age the organism
+                organism.age += 0.1 * simulationSpeed;
+                
+                // Consume energy
+                organism.energy -= 0.02 * organism.cells.length * simulationSpeed;
+                
+                // Distribute energy to cells if they have nutrient sharing
+                if (organism.cells[0] && organism.cells[0].userData.nutrientSharing) {
+                    const energyPerCell = organism.energy / organism.cells.length;
+                    organism.cells.forEach(cell => {
+                        cell.userData.energy = energyPerCell;
+                    });
+                }
+                
+                // Move organism
+                if (Math.random() < 0.7 && foodParticles.length > 0) {
+                    // Find closest food
+                    let closestFood = null;
+                    let closestDistance = Infinity;
+                    
+                    foodParticles.forEach(food => {
+                        const distance = organism.position.distanceTo(food.position);
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestFood = food;
+                        }
+                    });
+                    
+                    if (closestFood) {
+                        // Move toward food
+                        const direction = new THREE.Vector3()
+                            .subVectors(closestFood.position, organism.position)
+                            .normalize();
+                        
+                        organism.position.add(direction.multiplyScalar(organism.speed * simulationSpeed));
+                    }
+                } else {
+                    // Random movement
+                    organism.position.x += (Math.random() - 0.5) * organism.speed * simulationSpeed;
+                    organism.position.y += (Math.random() - 0.5) * organism.speed * simulationSpeed;
+                }
+                
+                // Update cell positions to stay with organism
+                const angleIncrement = (Math.PI * 2) / organism.cells.length;
+                organism.cells.forEach((cell, index) => {
+                    const angle = angleIncrement * index;
+                    const radius = 2.5;
+                    
+                    cell.position.x = organism.position.x + Math.cos(angle) * radius;
+                    cell.position.y = organism.position.y + Math.sin(angle) * radius;
+                    cell.position.z = organism.position.z;
+                });
+                
+                // Check for reproduction
+                if (organism.energy > 200 && organism.cells.length < 10) {
+                    // Organism can reproduce by budding off a new cell
+                    const newCell = organism.cells[0].clone();
+                    newCell.userData = {...organism.cells[0].userData};
+                    newCell.userData.inOrganism = false;
+                    newCell.userData.organismId = null;
+                    newCell.userData.energy = 50;
+                    
+                    // Position new cell near organism
+                    newCell.position.x = organism.position.x + (Math.random() - 0.5) * 5;
+                    newCell.position.y = organism.position.y + (Math.random() - 0.5) * 5;
+                    
+                    scene.add(newCell);
+                    cells.push(newCell);
+                    colonyCounts[organism.colony]++;
+                    updateColonyCounts();
+                    
+                    organism.energy -= 50;
+                    
+                    addEvent(`The ${organism.colony} organism budded off a new cell!`);
+                }
+                
+                // Check for fragmentation
+                if (organism.cells.length > 3 && Math.random() < 0.001) {
+                    fragmentOrganism(organism);
+                }
+                
+                // Check for organism death
+                if (organism.energy <= 0) {
+                    // Release all cells
+                    organism.cells.forEach(cell => {
+                        cell.userData.inOrganism = false;
+                        cell.userData.organismId = null;
+                        cell.userData.energy = 10; // Minimal energy
+                    });
+                    
+                    // Remove organism
+                    multicellularOrganisms = multicellularOrganisms.filter(o => o.id !== organism.id);
+                    colonyOrganisms[organism.colony]--;
+                    updateOrganismCounts();
+                    
+                    addEvent(`A ${organism.colony} organism died and released its cells!`);
+                }
+            });
+        }
+        
+        // Update biofilms
+        function updateBiofilms() {
+            biofilms.forEach(biofilm => {
+                // Biofilms grow slowly
+                if (Math.random() < 0.005 && biofilm.cells.length < 20) {
+                    // Find a cell to replicate
+                    const sourceCell = biofilm.cells[Math.floor(Math.random() * biofilm.cells.length)];
+                    
+                    const geometry = new THREE.SphereGeometry(1, 16, 16);
+                    const material = new THREE.MeshPhongMaterial({ 
+                        color: 0x888888
+                    });
+                    
+                    const newCell = new THREE.Mesh(geometry, material);
+                    newCell.position.copy(sourceCell.position);
+                    newCell.position.x += (Math.random() - 0.5) * 2;
+                    newCell.position.y += (Math.random() - 0.5) * 2;
+                    
+                    newCell.userData = {...sourceCell.userData};
+                    newCell.userData.energy = 50;
+                    newCell.userData.inBiofilm = true;
+                    newCell.userData.biofilmId = biofilm.id;
+                    
+                    scene.add(newCell);
+                    cells.push(newCell);
+                    biofilm.cells.push(newCell);
+                    colonyCounts[biofilm.colony]++;
+                    updateColonyCounts();
+                }
+                
+                // Biofilms can dissolve if conditions are bad
+                if (biofilm.energy < 10 && Math.random() < 0.01) {
+                    dissolveBiofilm(biofilm);
+                }
+            });
+        }
+        
+        // Fragment organism
+        function fragmentOrganism(organism) {
+            const fragmentSize = Math.floor(organism.cells.length / 2);
+            const newOrganismCells = organism.cells.splice(0, fragmentSize);
+            
+            if (newOrganismCells.length > 1) {
+                const newOrganismId = multicellularOrganisms.length + 1;
+                const newOrganism = {
+                    id: newOrganismId,
+                    colony: organism.colony,
+                    cells: newOrganismCells,
+                    energy: organism.energy / 2,
+                    position: new THREE.Vector3(
+                        organism.position.x + (Math.random() - 0.5) * 5,
+                        organism.position.y + (Math.random() - 0.5) * 5,
+                        organism.position.z
+                    ),
+                    speed: organism.speed,
+                    age: 0
+                };
+                
+                newOrganismCells.forEach(cell => {
+                    cell.userData.organismId = newOrganismId;
+                });
+                
+                multicellularOrganisms.push(newOrganism);
+                colonyOrganisms[organism.colony]++;
+                updateOrganismCounts();
+                
+                organism.energy /= 2;
+                
+                stats.fragmentation++;
+                document.getElementById('fragmentation').textContent = stats.fragmentation;
+                
+                addEvent(`A ${organism.colony} organism fragmented into two!`);
+            }
+        }
+        
+        // Dissolve biofilm
+        function dissolveBiofilm(biofilm) {
+            biofilm.cells.forEach(cell => {
+                cell.userData.inBiofilm = false;
+                cell.userData.biofilmId = null;
+                cell.material.color.set(biofilm.colony === 'red' ? 0xff3e3e : 
+                                      biofilm.colony === 'blue' ? 0x4cc9f0 : 0x3aec6d);
+            });
+            
+            biofilms = biofilms.filter(b => b.id !== biofilm.id);
+            document.getElementById('biofilm-count').textContent = biofilms.length;
+            
+            addEvent(`A ${biofilm.colony} biofilm dissolved!`);
+        }
+        
+        // Mutate a cell
+        function mutateCell(cell) {
+            // Get a random adaptation that the cell doesn't have yet
+            const availableAdaptations = allAdaptations.filter(
+                adaptation => !colonyAdaptations[cell.userData.colony].has(adaptation.id)
+            );
+            
+            if (availableAdaptations.length > 0) {
+                const newAdaptation = availableAdaptations[Math.floor(Math.random() * availableAdaptations.length)];
+                newAdaptation.effect(cell);
+                
+                // Add to colony's adaptations
+                colonyAdaptations[cell.userData.colony].add(newAdaptation.id);
+                updateColonyAdaptations();
+                
+                // Visual indication of adaptation
+                document.getElementById(`${newAdaptation.id}-adapt`).classList.add('active');
+                
+                addEvent(`${cell.userData.colony.toUpperCase()} colony evolved ${newAdaptation.name}!`);
+            }
+        }
+        
+        // Update time of day and day/night cycle
+        function updateTime() {
+            timeOfDay += 0.01 * simulationSpeed;
+            if (timeOfDay >= 24) {
+                timeOfDay = 0;
+                cycleCount++;
+                document.getElementById('cycle-count').textContent = cycleCount;
+                
+                // Chance for new mutations at the start of each day
+                if (Math.random() < 0.3) {
+                    const randomCell = cells[Math.floor(Math.random() * cells.length)];
+                    mutateCell(randomCell);
+                }
+            }
+            
+            // Update sun/moon indicator
+            const sunMoon = document.querySelector('.sun-moon');
+            const timeDisplay = document.querySelector('.time-display');
+            
+            if (timeOfDay > 6 && timeOfDay < 20) {
+                // Day time
+                if (!dayTime) {
+                    dayTime = true;
+                    timeDisplay.textContent = 'Cycle: Day';
+                    sunMoon.classList.remove('moon');
+                    addEvent("Daytime begins - photosynthetic cells gain energy");
+                }
+                
+                // Adjust light intensity based on time of day
+                const intensity = Math.sin((timeOfDay - 6) / 14 * Math.PI) * 0.8 + 0.2;
+                scene.children.forEach(child => {
+                    if (child instanceof THREE.DirectionalLight) {
+                        child.intensity = intensity;
+                    }
+                });
+            } else {
+                // Night time
+                if (dayTime) {
+                    dayTime = false;
+                    timeDisplay.textContent = 'Cycle: Night';
+                    sunMoon.classList.add('moon');
+                    addEvent("Nighttime begins - cells with night vision become more active");
+                }
+                
+                // Adjust light intensity for night
+                const intensity = 0.1;
+                scene.children.forEach(child => {
+                    if (child instanceof THREE.DirectionalLight) {
+                        child.intensity = intensity;
+                    }
+                });
+            }
+            
+            // Update time display
+            const hours = Math.floor(timeOfDay);
+            const minutes = Math.floor((timeOfDay - hours) * 60);
+            document.querySelector('.environment div:last-child').textContent = 
+                `Time: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            document.getElementById('sim-time').textContent = Math.floor(simTime);
+            document.getElementById('total-cells').textContent = cells.length;
+            document.getElementById('organism-count').textContent = multicellularOrganisms.length;
+            document.getElementById('specialized-cells').textContent = stats.specializedCells;
+            
+            // Find largest organism
+            let largestOrganism = 0;
+            multicellularOrganisms.forEach(organism => {
+                if (organism.cells.length > largestOrganism) {
+                    largestOrganism = organism.cells.length;
+                }
+            });
+            document.getElementById('largest-organism').textContent = largestOrganism;
+        }
+        
+        // Update colony counts display
+        function updateColonyCounts() {
+            document.getElementById('red-count').textContent = colonyCounts.red;
+            document.getElementById('blue-count').textContent = colonyCounts.blue;
+            document.getElementById('green-count').textContent = colonyCounts.green;
+        }
+        
+        // Update organism counts display
+        function updateOrganismCounts() {
+            document.getElementById('red-organisms').textContent = colonyOrganisms.red;
+            document.getElementById('blue-organisms').textContent = colonyOrganisms.blue;
+            document.getElementById('green-organisms').textContent = colonyOrganisms.green;
+        }
+        
+        // Update colony adaptations display
+        function updateColonyAdaptations() {
+            document.getElementById('red-adaptations').textContent = colonyAdaptations.red.size;
+            document.getElementById('blue-adaptations').textContent = colonyAdaptations.blue.size;
+            document.getElementById('green-adaptations').textContent = colonyAdaptations.green.size;
+        }
+        
+        // Add event to log
+        function addEvent(message) {
+            const eventLog = document.getElementById('event-log');
+            const eventElement = document.createElement('div');
+            eventElement.className = 'event';
+            eventElement.textContent = message;
+            eventLog.appendChild(eventElement);
+            
+            // Keep only the last 10 events
+            while (eventLog.children.length > 10) {
+                eventLog.removeChild(eventLog.firstChild);
+            }
+            
+            // Auto-scroll to bottom
+            eventLog.scrollTop = eventLog.scrollHeight;
+        }
+        
+        // Toggle simulation pause
+        function togglePause() {
+            simulationPaused = !simulationPaused;
+            document.getElementById('pause-btn').textContent = simulationPaused ? 'Resume' : 'Pause';
+            
+            addEvent(simulationPaused ? "Simulation paused" : "Simulation resumed");
+        }
+        
+        // Reset simulation
+        function resetSimulation() {
+            // Remove all cells and food
+            cells.forEach(cell => scene.remove(cell));
+            foodParticles.forEach(food => scene.remove(food));
+            toxins.forEach(toxin => scene.remove(toxin));
+            
+            // Reset arrays
+            cells = [];
+            foodParticles = [];
+            toxins = [];
+            multicellularOrganisms = [];
+            biofilms = [];
+            
+            // Reset counters
+            colonyCounts.red = 0;
+            colonyCounts.blue = 0;
+            colonyCounts.green = 0;
+            
+            colonyOrganisms.red = 0;
+            colonyOrganisms.blue = 0;
+            colonyOrganisms.green = 0;
+            
+            colonyAdaptations.red = new Set();
+            colonyAdaptations.blue = new Set();
+            colonyAdaptations.green = new Set();
+            
+            stats = {
+                sexualReproduction: 0,
+                fragmentation: 0,
+                sporeProduction: 0,
+                specializedCells: 0
+            };
+            
+            simTime = 0;
+            cycleCount = 1;
+            timeOfDay = 8;
+            dayTime = true;
+            
+            // Create new colonies
+            createColony('red', 12);
+            createColony('blue', 15);
+            createColony('green', 8);
+            
+            // Create initial food
+            spawnFood(20);
+            
+            // Update displays
+            updateColonyCounts();
+            updateOrganismCounts();
+            updateColonyAdaptations();
+            updateStatistics();
+            
+            // Reset adaptation indicators
+            document.querySelectorAll('.adaptation').forEach(a => a.classList.remove('active'));
+            
+            // Reset environment indicators
+            document.querySelector('.time-display').textContent = 'Cycle: Day';
+            document.querySelector('.sun-moon').classList.remove('moon');
+            document.querySelector('.environment div:last-child').textContent = 'Time: 08:00';
+            
+            // Clear event log
+            const eventLog = document.getElementById('event-log');
+            eventLog.innerHTML = '';
+            addEvent("Simulation reset");
+        }
+        
+        // Update simulation speed based on slider
+        function updateSimulationSpeed(e) {
+            simulationSpeed = parseFloat(e.target.value);
+            document.getElementById('speed-value').textContent = simulationSpeed.toFixed(1) + 'x';
+        }
+        
+        // Update light intensity based on slider
+        function updateLightIntensity(e) {
+            const value = e.target.value;
+            document.getElementById('light-value').textContent = value + '%';
+            
+            // Adjust ambient light
+            scene.children.forEach(child => {
+                if (child instanceof THREE.AmbientLight) {
+                    child.intensity = value / 100;
+                }
+            });
+        }
+        
+        // Update food spawn rate based on slider
+        function updateFoodSpawnRate(e) {
+            const value = e.target.value;
+            document.getElementById('food-value').textContent = value + '%';
+        }
+        
+        // Update mutation rate based on slider
+        function updateMutationRate(e) {
+            mutationRate = parseInt(e.target.value);
+            document.getElementById('mutation-value').textContent = mutationRate + '%';
+        }
+        
+        // Update cooperation chance based on slider
+        function updateCooperationChance(e) {
+            cooperationChance = parseInt(e.target.value);
+            document.getElementById('cooperation-value').textContent = cooperationChance + '%';
+        }
+        
+        // Update predator pressure based on slider
+        function updatePredatorPressure(e) {
+            predatorPressure = parseInt(e.target.value);
+            document.getElementById('predator-value').textContent = predatorPressure + '%';
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate cells and food slightly for visual effect
+            cells.forEach(cell => {
+                cell.rotation.x += 0.01;
+                cell.rotation.y += 0.01;
+            });
+            
+            foodParticles.forEach(food => {
+                food.rotation.x += 0.02;
+                food.rotation.y += 0.02;
+            });
+            
+            toxins.forEach(toxin => {
+                toxin.rotation.x += 0.015;
+                toxin.rotation.y += 0.015;
+            });
+            
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 320) / (window.innerHeight - 100);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 320, window.innerHeight - 100);
+        });
+        
+        // Start the simulation
+        init();
+    </script>
+</body>
+</html>
