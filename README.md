@@ -1,10 +1,15 @@
 # Cell-Sim
-Cellular Colony Evolution Simulation
+
+Cell-Sim is a Cellular Colony Evolution Simulation (CCES).
 An interactive 3D simulation of competing cellular colonies with light/dark cycles, food sources, and various interactions. This will use Three.js for the 3D visualization and a simple HTML/CSS interface.
 
-## features
+## Goals
 
-This enhanced simulation now includes a comprehensive set of evolutionary adaptations:
+To create a CCES package in a single html for easy deployment on desktop, notebook, phone and tablet.
+
+## Features
+
+This simulation includes a comprehensive set of evolutionary adaptations.
 
 * Specialized Adhesion: Cells produce adhesion proteins for stable multicellular structures
 * Biofilm Formation: Cells secrete extracellular matrix forming protective communities
