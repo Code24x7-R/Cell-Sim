@@ -285,6 +285,7 @@
             border: 1px solid #3aec6d;
         }
     </style>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div class="container">
@@ -496,8 +497,129 @@
     </div>
 
     <script>
+        // Audio Controller class for generating sound effects
+        class AudioController {
+            constructor() {
+                this.audioCtx = null;
+                this.isInitialized = false;
+                // Bind the initialization method to be called on the first user interaction.
+                this.initOnFirstInteraction = this.initOnFirstInteraction.bind(this);
+                window.addEventListener('click', this.initOnFirstInteraction, { once: true });
+                window.addEventListener('touchend', this.initOnFirstInteraction, { once: true });
+            }
+
+            initOnFirstInteraction() {
+                if (this.isInitialized) return;
+                try {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.isInitialized = true;
+                    console.log("AudioContext initialized.");
+                } catch (e) {
+                    console.error("Web Audio API is not supported in this browser", e);
+                }
+            }
+
+            // Resume context if it's suspended
+            resumeContext() {
+                if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+            }
+
+            playSound(type) {
+                if (!this.audioCtx || !this.isInitialized) return;
+                this.resumeContext();
+
+                const now = this.audioCtx.currentTime;
+                const oscillator = this.audioCtx.createOscillator();
+                const gainNode = this.audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioCtx.destination);
+
+                switch (type) {
+                    case 'spawn':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(880, now);
+                        gainNode.gain.setValueAtTime(0.15, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.2);
+                        break;
+
+                    case 'eat':
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(150, now);
+                        gainNode.gain.setValueAtTime(0.08, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.1);
+                        break;
+
+                    case 'death':
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(220, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(55, now + 0.5);
+                        gainNode.gain.setValueAtTime(0.2, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.5);
+                        break;
+
+                    case 'mutate':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(600, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                        oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+                        gainNode.gain.setValueAtTime(0.25, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.3);
+                        break;
+
+                    case 'organism':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(200, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.4);
+                        gainNode.gain.setValueAtTime(0.1, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.4);
+                        break;
+
+                    case 'biofilm':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(100, now);
+                        gainNode.gain.setValueAtTime(0.08, now);
+                        gainNode.gain.linearRampToValueAtTime(0.001, now + 0.5);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.5);
+                        break;
+
+                    case 'predation':
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(440, now);
+                        oscillator.frequency.exponentialRampToValueAtTime(220, now + 0.1);
+                        gainNode.gain.setValueAtTime(0.2, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.1);
+                        break;
+
+                    case 'click':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(1000, now);
+                        gainNode.gain.setValueAtTime(0.05, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.05);
+                        break;
+                }
+            }
+        }
+
         // Main Three.js variables
         let scene, camera, renderer;
+        let audioController;
         let cells = [];
         let foodParticles = [];
         let toxins = [];
@@ -613,6 +735,9 @@
         
         // Initialize the simulation
         function init() {
+            // Instantiate the audio controller
+            audioController = new AudioController();
+
             // Create scene
             scene = new THREE.Scene();
             
@@ -644,8 +769,14 @@
             spawnFood(20);
             
             // Add event listeners for controls
-            document.getElementById('pause-btn').addEventListener('click', togglePause);
-            document.getElementById('reset-btn').addEventListener('click', resetSimulation);
+            document.getElementById('pause-btn').addEventListener('click', () => {
+                audioController.playSound('click');
+                togglePause();
+            });
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                audioController.playSound('click');
+                resetSimulation();
+            });
             document.getElementById('speed-slider').addEventListener('input', updateSimulationSpeed);
             
             document.getElementById('light-slider').addEventListener('input', updateLightIntensity);
@@ -657,6 +788,7 @@
             // Tab functionality
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', () => {
+                    audioController.playSound('click');
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     
@@ -807,6 +939,7 @@
                                     scene.remove(food);
                                     foodParticles.splice(i, 1);
                                     document.getElementById('food-count').textContent = foodParticles.length;
+                                    audioController.playSound('eat');
                                     break;
                                 }
                             }
@@ -861,6 +994,7 @@
                         scene.remove(food);
                         foodParticles.splice(i, 1);
                         document.getElementById('food-count').textContent = foodParticles.length;
+                        audioController.playSound('eat');
                         break;
                     }
                 }
@@ -918,6 +1052,7 @@
                     colonyCounts[otherCell.userData.colony]--;
                     updateColonyCounts();
                     
+                    audioController.playSound('predation');
                     addEvent(`A ${cell.userData.colony} cell consumed a ${otherCell.userData.colony} cell!`);
                 }
             }
@@ -979,6 +1114,7 @@
             cells.push(newCell);
             colonyCounts[cell.userData.colony]++;
             updateColonyCounts();
+            audioController.playSound('spawn');
         }
         
         // Handle cell death
@@ -1023,6 +1159,7 @@
             cells.splice(cells.indexOf(cell), 1);
             colonyCounts[cell.userData.colony]--;
             updateColonyCounts();
+            audioController.playSound('death');
             
             // Sometimes spawn food when a cell dies
             if (Math.random() < 0.3) {
@@ -1069,6 +1206,7 @@
             colonyOrganisms[cell1.userData.colony]++;
             updateOrganismCounts();
             
+            audioController.playSound('organism');
             addEvent(`A new multicellular organism formed in the ${cell1.userData.colony} colony!`);
         }
         
@@ -1101,6 +1239,7 @@
             biofilms.push(biofilm);
             document.getElementById('biofilm-count').textContent = biofilms.length;
             
+            audioController.playSound('biofilm');
             addEvent(`A new biofilm formed in the ${cell1.userData.colony} colony!`);
         }
         
@@ -1428,6 +1567,7 @@
                 // Visual indication of adaptation
                 document.getElementById(`${newAdaptation.id}-adapt`).classList.add('active');
                 
+                audioController.playSound('mutate');
                 addEvent(`${cell.userData.colony.toUpperCase()} colony evolved ${newAdaptation.name}!`);
             }
         }
@@ -1699,5 +1839,6 @@
         // Start the simulation
         init();
     </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
