@@ -5,7 +5,8 @@ An interactive 3D simulation of competing cellular colonies with light/dark cycl
 
 ## Goals
 
-To create a CCES package in a single html for easy deployment on desktop, notebook, phone and tablet.
+To create a CCES package in a single html for easy deployment on desktop, notebook, phone and tablet. 
+Note that while based on life science, it is just a sim. 😎
 
 ## Features
 
@@ -22,7 +23,7 @@ This simulation includes a comprehensive set of evolutionary adaptations.
 * Cell Communication: Signaling mechanisms to coordinate behavior
 * Homeostasis: Maintaining internal stability in changing environments.
 
-## installation
+## Installation
 
 Clone the repo or download index.html and open it or
-try it <https://code24x7-r.github.io/Cell-Sim/>
+try it <https://code24x7-r.github.io/Cell-Sim/> live.
