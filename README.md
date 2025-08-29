@@ -19,5 +19,5 @@ This enhanced simulation now includes a comprehensive set of evolutionary adapta
 
 ## installation
 
-Clone the repo or download index.html and open it.
+Clone the repo or download index.html and open it or
 try it <https://code24x7-r.github.io/Cell-Sim/>
