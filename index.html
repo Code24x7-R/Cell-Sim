@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolutionary Cellular Colony Simulator</title>
+    <title>Evolutionary Cellular Colony Simulator with Audio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Exo 2', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
-            background: #1a1a2e;
+            background: linear-gradient(135deg, #0c1641 0%, #1a1a2e 100%);
             color: #e6e6e6;
             overflow: hidden;
+            background-attachment: fixed;
         }
         
         .container {
@@ -26,24 +27,30 @@
         }
         
         header {
-            background: linear-gradient(90deg, #16213e 0%, #0f3460 100%);
-            padding: 1rem;
+            background: linear-gradient(90deg, #0f3460 0%, #1b6ca8 100%);
+            padding: 1.2rem;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
             z-index: 10;
+            position: relative;
+            border-bottom: 1px solid #4cc9f0;
         }
         
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             margin-bottom: 0.5rem;
-            background: linear-gradient(45deg, #4cc9f0, #4361ee);
+            background: linear-gradient(45deg, #4cc9f0, #9d4edd);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(77, 201, 240, 0.3);
+            font-weight: 800;
+            letter-spacing: 1px;
         }
         
         .subtitle {
-            font-size: 1rem;
-            opacity: 0.8;
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
         }
         
         .main-content {
@@ -55,221 +62,268 @@
         .simulation-container {
             flex: 1;
             position: relative;
+            background: radial-gradient(circle at center, #16213e 0%, #0c1641 100%);
+            overflow: hidden;
         }
         
         #simulation {
             width: 100%;
             height: 100%;
-            cursor: pointer;
         }
         
         .controls {
-            width: 320px;
-            background: rgba(13, 23, 42, 0.9);
-            padding: 1rem;
+            width: 350px;
+            background: rgba(13, 23, 42, 0.85);
+            padding: 1.2rem;
             overflow-y: auto;
             border-left: 1px solid #2d3748;
-            display: flex;
-            flex-direction: column;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
         }
         
         .control-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.8rem;
+            position: relative;
         }
-
-        .control-group.event-log-group {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 150px;
+        
+        .control-group::after {
+            content: '';
+            position: absolute;
+            bottom: -0.9rem;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(76, 201, 240, 0.5), transparent);
         }
         
         .control-title {
-            font-size: 1.2rem;
-            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
             color: #4cc9f0;
-            border-bottom: 1px solid #2d3748;
             padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+            border-image: linear-gradient(90deg, #4cc9f0, transparent) 1;
+            text-shadow: 0 0 5px rgba(76, 201, 240, 0.5);
         }
         
         .slider-container {
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
+            position: relative;
         }
         
         .slider-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
         }
         
         input[type="range"] {
             width: 100%;
-            height: 5px;
+            height: 6px;
             -webkit-appearance: none;
-            background: #2d3748;
+            background: linear-gradient(90deg, #4cc9f0, #9d4edd);
             border-radius: 5px;
             outline: none;
         }
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            background: #4cc9f0;
+            background: #ffffff;
             cursor: pointer;
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.8);
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(157, 78, 221, 1);
         }
         
         button {
             width: 100%;
-            padding: 0.7rem;
-            margin: 0.3rem 0;
-            background: #4361ee;
+            padding: 0.8rem;
+            margin: 0.4rem 0;
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
         
         button:hover {
-            background: #3a56d4;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
+            gap: 0.7rem;
             margin-top: 1rem;
         }
         
         .stat-box {
-            background: rgba(45, 55, 72, 0.5);
-            padding: 0.7rem;
-            border-radius: 4px;
+            background: linear-gradient(135deg, rgba(45, 55, 72, 0.6), rgba(13, 23, 42, 0.6));
+            padding: 0.9rem;
+            border-radius: 8px;
             text-align: center;
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            border-color: rgba(76, 201, 240, 0.4);
         }
         
         .stat-value {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: bold;
             color: #4cc9f0;
+            text-shadow: 0 0 8px rgba(76, 201, 240, 0.4);
         }
         
         .stat-label {
             font-size: 0.8rem;
-            opacity: 0.8;
+            opacity: 0.9;
+            margin-top: 0.3rem;
         }
         
         .colony-indicator {
             display: flex;
             align-items: center;
-            margin: 0.5rem 0;
+            margin: 0.7rem 0;
+            padding: 0.5rem;
+            background: rgba(45, 55, 72, 0.4);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .colony-indicator:hover {
+            background: rgba(45, 55, 72, 0.6);
+            transform: translateX(5px);
         }
         
         .color-box {
-            width: 16px;
-            height: 16px;
-            margin-right: 0.5rem;
-            border-radius: 3px;
+            width: 20px;
+            height: 20px;
+            margin-right: 0.7rem;
+            border-radius: 50%;
+            box-shadow: 0 0 8px currentColor;
         }
         
         .environment {
             position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 0.7rem;
-            border-radius: 8px;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1rem;
+            border-radius: 12px;
             z-index: 5;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         }
         
         .time-display {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             text-align: center;
+            margin-bottom: 0.5rem;
+            color: #4cc9f0;
+            text-shadow: 0 0 5px rgba(76, 201, 240, 0.5);
         }
         
         .sun-moon {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            margin: 0.5rem auto;
-            background: #ffdd00;
-            box-shadow: 0 0 20px #ffdd00;
+            margin: 0.7rem auto;
+            background: radial-gradient(circle at 30% 30%, #ffdd00, #ffaa00);
+            box-shadow: 0 0 20px #ffdd00, 0 0 40px rgba(255, 221, 0, 0.5);
+            transition: all 1s ease;
         }
         
         .moon {
-            background: #e6e6e6;
-            box-shadow: 0 0 20px #e6e6e6;
+            background: radial-gradient(circle at 30% 30%, #e6e6e6, #aaaaaa);
+            box-shadow: 0 0 20px #e6e6e6, 0 0 40px rgba(230, 230, 230, 0.5);
         }
         
         .mutation-indicator {
-            font-size: 0.8rem;
-            margin-top: 0.3rem;
-            padding: 0.2rem;
-            border-radius: 3px;
-            background: rgba(76, 201, 240, 0.2);
-        }
-        
-        .abilities {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
+            font-size: 0.9rem;
             margin-top: 0.5rem;
-        }
-        
-        .ability {
-            font-size: 0.8rem;
-            padding: 0.3rem;
-            background: rgba(67, 97, 238, 0.2);
-            border-radius: 3px;
-            text-align: center;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: linear-gradient(135deg, rgba(76, 201, 240, 0.2), rgba(157, 78, 221, 0.2));
+            border: 1px solid rgba(76, 201, 240, 0.3);
         }
         
         .event-log {
-            flex-grow: 1;
+            height: 120px;
             overflow-y: auto;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.5rem;
-            border-radius: 4px;
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.7rem;
+            border-radius: 8px;
+            margin-top: 0.7rem;
+            font-size: 0.9rem;
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
         }
         
         .event {
-            margin-bottom: 0.2rem;
-            padding: 0.2rem;
-            border-left: 2px solid #4cc9f0;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-left: 3px solid #4cc9f0;
+            background: rgba(13, 23, 42, 0.5);
+            border-radius: 0 4px 4px 0;
+            animation: fadeIn 0.5s ease;
         }
         
-        .multicellular-stats {
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background: rgba(45, 55, 72, 0.3);
-            border-radius: 4px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         
         .tab-container {
             display: flex;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #2d3748;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid;
+            border-image: linear-gradient(90deg, #4cc9f0, #9d4edd) 1;
         }
         
         .tab {
-            padding: 0.5rem 1rem;
+            padding: 0.7rem 1.2rem;
             cursor: pointer;
-            background: rgba(45, 55, 72, 0.3);
-            margin-right: 0.2rem;
-            border-radius: 4px 4px 0 0;
+            background: linear-gradient(135deg, rgba(45, 55, 72, 0.5), rgba(13, 23, 42, 0.5));
+            margin-right: 0.3rem;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+            font-weight: 600;
         }
         
         .tab.active {
-            background: rgba(67, 97, 238, 0.3);
-            border-bottom: 2px solid #4cc9f0;
+            background: linear-gradient(135deg, rgba(76, 201, 240, 0.3), rgba(157, 78, 221, 0.3));
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.2);
         }
         
         .tab-content {
             display: none;
+            animation: fadeIn 0.5s ease;
         }
         
         .tab-content.active {
@@ -279,181 +333,168 @@
         .adaptation-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
+            gap: 0.8rem;
         }
         
         .adaptation {
-            font-size: 0.8rem;
-            padding: 0.5rem;
-            background: rgba(45, 55, 72, 0.5);
-            border-radius: 4px;
+            font-size: 0.9rem;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, rgba(45, 55, 72, 0.6), rgba(13, 23, 42, 0.6));
+            border-radius: 8px;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            transition: all 0.3s;
             cursor: pointer;
         }
         
-        .adaptation .colony-dots {
-            display: flex;
-            margin-top: 4px;
+        .adaptation.active {
+            background: linear-gradient(135deg, rgba(58, 236, 109, 0.2), rgba(76, 201, 240, 0.2));
+            border: 1px solid #3aec6d;
+            box-shadow: 0 0 15px rgba(58, 236, 109, 0.4);
+            transform: scale(1.05);
         }
-
-        .adaptation .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin: 0 2px;
-            background: #333;
-            transition: background 0.3s;
-        }
-
-        .adaptation .dot.red { background-color: #552222; }
-        .adaptation .dot.blue { background-color: #224455; }
-        .adaptation .dot.green { background-color: #225533; }
-        .adaptation .dot.red.active { background-color: #ff3e3e; }
-        .adaptation .dot.blue.active { background-color: #4cc9f0; }
-        .adaptation .dot.green.active { background-color: #3aec6d; }
         
-        #adaptation-details {
-            font-size: 0.8rem; 
-            padding: 0.5rem; 
-            background: rgba(45,55,72,0.3); 
-            border-radius: 4px;
-            min-height: 40px;
-            margin-top: 0.5rem;
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
         }
-
-        .inspector-panel {
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(76, 201, 240, 0.3);
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(20vw);
+                opacity: 0;
+            }
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #4cc9f0;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #0f3460;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .glow {
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+        
+        .special-cell {
+            animation: glowPulse 3s infinite;
+        }
+        
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 5px currentColor; }
+            50% { box-shadow: 0 0 20px currentColor; }
+            100% { box-shadow: 0 0 5px currentColor; }
+        }
+        
+        .audio-controls {
             position: absolute;
             bottom: 1rem;
-            left: 1rem;
-            width: 280px;
-            background: rgba(13, 23, 42, 0.95);
-            border: 1px solid #4cc9f0;
-            border-radius: 8px;
-            padding: 1rem;
-            z-index: 20;
-            color: #e6e6e6;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-            transition: opacity 0.3s, transform 0.3s;
-        }
-
-        .inspector-panel.hidden {
-            opacity: 0;
-            transform: translateY(20px);
-            pointer-events: none;
-        }
-
-        .inspector-title {
-            font-size: 1.1rem;
-            color: #4cc9f0;
-            margin-bottom: 0.7rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #2d3748;
-        }
-
-        .inspector-stat {
+            right: 1rem;
             display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .inspector-stat span:first-child {
-            opacity: 0.8;
-        }
-
-        #inspector-close-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background: none;
-            border: none;
-            color: #e6e6e6;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.2rem;
+            gap: 0.5rem;
+            z-index: 10;
         }
         
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .controls {
-                width: 280px;
-            }
-            h1 {
-                font-size: 1.8rem;
-            }
+        .audio-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(13, 23, 42, 0.7);
+            border: 1px solid #4cc9f0;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
         }
-
-        @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-            }
-            .controls {
-                width: 100%;
-                height: 40vh;
-                border-left: none;
-                border-top: 1px solid #2d3748;
-            }
-            .simulation-container {
-                height: 60vh;
-            }
-            header {
-                padding: 0.5rem;
-            }
-            h1 {
-                font-size: 1.5rem;
-            }
-            .subtitle {
-                font-size: 0.8rem;
-            }
+        
+        .audio-btn:hover {
+            transform: scale(1.1);
+            background: rgba(76, 201, 240, 0.3);
         }
     </style>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Evolutionary Cellular Colony Simulator</h1>
-            <div class="subtitle">Modeling complex evolutionary adaptations in competing colonies</div>
+            <div class="subtitle">Witness the emergence of complex life from simple beginnings</div>
         </header>
         
         <div class="main-content">
             <div class="simulation-container">
                 <div id="simulation"></div>
+                <div class="floating-particles" id="particles"></div>
                 
                 <div class="environment">
                     <div class="time-display">Cycle: Day</div>
                     <div class="sun-moon"></div>
                     <div>Time: 08:00</div>
                 </div>
-
-                <div id="inspector-panel" class="inspector-panel hidden">
-                    <button id="inspector-close-btn">&times;</button>
-                    <div class="inspector-title" id="inspector-title">Cell Inspector</div>
-                    <div class="inspector-stat">
-                        <span>Colony:</span>
-                        <span id="inspector-colony">N/A</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span>Health:</span>
-                        <span id="inspector-health">N/A</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span>Energy:</span>
-                        <span id="inspector-energy">N/A</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span>Age:</span>
-                        <span id="inspector-age">N/A</span>
-                    </div>
-                    <div class="inspector-stat">
-                        <span>Status:</span>
-                        <span id="inspector-status">N/A</span>
-                    </div>
-                    <div id="inspector-adaptations" style="margin-top: 0.5rem; font-size: 0.8rem;"></div>
+                
+                <div class="audio-controls">
+                    <button class="audio-btn" id="toggle-music">🎵</button>
+                    <button class="audio-btn" id="toggle-sfx">🔊</button>
                 </div>
             </div>
             
@@ -467,8 +508,8 @@
                 <div class="tab-content active" id="controls-tab">
                     <div class="control-group">
                         <div class="control-title">Simulation Controls</div>
-                        <button id="pause-btn">Pause</button>
-                        <button id="reset-btn">Reset Simulation</button>
+                        <button id="pause-btn">⏸️ Pause</button>
+                        <button id="reset-btn">🔄 Reset Simulation</button>
                         <div class="slider-container">
                             <div class="slider-label">
                                 <span>Simulation Speed</span>
@@ -511,14 +552,6 @@
                                 <span id="cooperation-value">10%</span>
                             </div>
                             <input type="range" id="cooperation-slider" min="0" max="50" value="10">
-                        </div>
-                        
-                        <div class="slider-container">
-                            <div class="slider-label">
-                                <span>Predator Pressure</span>
-                                <span id="predator-value">15%</span>
-                            </div>
-                            <input type="range" id="predator-slider" min="0" max="50" value="15">
                         </div>
                     </div>
                     
@@ -577,11 +610,26 @@
                             </div>
                         </div>
                         
-                        <div class="multicellular-stats">
-                            <div class="stat-label">Multicellular Organisms</div>
-                            <div class="stat-value" id="organism-count">0</div>
-                            <div class="stat-label">Largest Organism: <span id="largest-organism">0</span> cells</div>
-                            <div class="stat-label">Biofilms: <span id="biofilm-count">0</span></div>
+                        <div class="stats">
+                            <div class="stat-box">
+                                <div class="stat-value" id="organism-count">0</div>
+                                <div class="stat-label">Organisms</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="largest-organism">0</div>
+                                <div class="stat-label">Largest Org.</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="biofilm-count">0</div>
+                                <div class="stat-label">Biofilms</div>
+                            </div>
+                            
+                            <div class="stat-box">
+                                <div class="stat-value" id="specialized-cells">0</div>
+                                <div class="stat-label">Specialized</div>
+                            </div>
                         </div>
                     </div>
                     
@@ -601,12 +649,12 @@
                             
                             <div class="stat-box">
                                 <div class="stat-value" id="spore-count">0</div>
-                                <div class="stat-label">Spores Produced</div>
+                                <div class="stat-label">Spores</div>
                             </div>
                             
                             <div class="stat-box">
-                                <div class="stat-value" id="specialized-cells">0</div>
-                                <div class="stat-label">Specialized Cells</div>
+                                <div class="stat-value" id="predation-count">0</div>
+                                <div class="stat-label">Predation</div>
                             </div>
                         </div>
                     </div>
@@ -617,28 +665,28 @@
                         <div class="control-title">Evolved Adaptations</div>
                         
                         <div class="adaptation-grid">
-                            <div class="adaptation" id="adhesion-adapt"><span>Adhesion</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="biofilm-adapt"><span>Biofilm Formation</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="skeleton-adapt"><span>External Skeleton</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="specialization-adapt"><span>Cell Specialization</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="digestive-adapt"><span>Digestive System</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="transport-adapt"><span>Transport System</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="sexual-adapt"><span>Sexual Reproduction</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="spore-adapt"><span>Spore Production</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="communication-adapt"><span>Cell Communication</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
-                            <div class="adaptation" id="homeostasis-adapt"><span>Homeostasis</span><div class="colony-dots"><div class="dot red"></div><div class="dot blue"></div><div class="dot green"></div></div></div>
+                            <div class="adaptation" id="adhesion-adapt">Adhesion</div>
+                            <div class="adaptation" id="biofilm-adapt">Biofilm</div>
+                            <div class="adaptation" id="skeleton-adapt">Skeleton</div>
+                            <div class="adaptation" id="specialization-adapt">Specialization</div>
+                            <div class="adaptation" id="digestive-adapt">Digestive</div>
+                            <div class="adaptation" id="transport-adapt">Transport</div>
+                            <div class="adaptation" id="sexual-adapt">Sexual</div>
+                            <div class="adaptation" id="spore-adapt">Spore</div>
+                            <div class="adaptation" id="communication-adapt">Communication</div>
+                            <div class="adaptation" id="homeostasis-adapt">Homeostasis</div>
                         </div>
                     </div>
                     
                     <div class="control-group">
                         <div class="control-title">Adaptation Details</div>
-                        <div id="adaptation-details">
+                        <div id="adaptation-details" style="font-size: 0.9rem; padding: 0.8rem; background: rgba(45,55,72,0.4); border-radius: 8px; min-height: 100px;">
                             Select an adaptation to view details
                         </div>
                     </div>
                 </div>
                 
-                <div class="control-group event-log-group">
+                <div class="control-group">
                     <div class="control-title">Event Log</div>
                     <div class="event-log" id="event-log">
                         <div class="event">Simulation started</div>
@@ -649,805 +697,484 @@
     </div>
 
     <script>
-        // Audio Controller class for generating sound effects
-        class AudioController {
-            constructor() {
-                this.audioCtx = null;
-                this.isInitialized = false;
+        // Audio context and settings
+        let audioContext;
+        let musicGainNode;
+        let sfxGainNode;
+        let musicOn = true;
+        let sfxOn = true;
+        let backgroundMusic;
+        
+        // Initialize audio
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                musicGainNode = audioContext.createGain();
+                sfxGainNode = audioContext.createGain();
+                
+                musicGainNode.connect(audioContext.destination);
+                sfxGainNode.connect(audioContext.destination);
+                
+                // Create background music
+                createBackgroundMusic();
+                
+                // Set up audio controls
+                document.getElementById('toggle-music').addEventListener('click', toggleMusic);
+                document.getElementById('toggle-sfx').addEventListener('click', toggleSfx);
+                
+            } catch (e) {
+                console.log('Web Audio API is not supported in this browser');
+                document.getElementById('toggle-music').style.display = 'none';
+                document.getElementById('toggle-sfx').style.display = 'none';
             }
-
-            init() {
-                if (this.isInitialized || this.audioCtx) return;
-                try {
-                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    this.isInitialized = true;
-                    console.log("AudioContext initialized.");
-                } catch (e) {
-                    console.error("Web Audio API is not supported in this browser", e);
-                }
-            }
-
-            // Resume context if it's suspended, should be called from a user gesture
-            resumeContext() {
-                if (!this.isInitialized) {
-                    this.init();
-                }
-                if (this.audioCtx && this.audioCtx.state === 'suspended') {
-                    this.audioCtx.resume().catch(e => console.error("Audio context resume failed:", e));
-                }
-            }
-
-            playSound(type) {
-                if (!this.audioCtx || !this.isInitialized || this.audioCtx.state !== 'running') return;
-
-                const now = this.audioCtx.currentTime;
-                const oscillator = this.audioCtx.createOscillator();
-                const gainNode = this.audioCtx.createGain();
+        }
+        
+        // Create background music
+        function createBackgroundMusic() {
+            // Simple ambient music using Web Audio API
+            const osc1 = audioContext.createOscillator();
+            const osc2 = audioContext.createOscillator();
+            const filter = audioContext.createBiquadFilter();
+            
+            osc1.type = 'sine';
+            osc1.frequency.value = 220;
+            
+            osc2.type = 'sine';
+            osc2.frequency.value = 277.18;
+            
+            filter.type = 'lowpass';
+            filter.frequency.value = 800;
+            
+            const lfo = audioContext.createOscillator();
+            const lfoGain = audioContext.createGain();
+            
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.1;
+            lfoGain.gain.value = 10;
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc1.frequency);
+            lfoGain.connect(osc2.frequency);
+            
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(musicGainNode);
+            
+            // Start oscillators
+            osc1.start();
+            osc2.start();
+            lfo.start();
+            
+            // Set volume
+            musicGainNode.gain.value = 0.1;
+            
+            backgroundMusic = { osc1, osc2, lfo, filter };
+        }
+        
+        // Toggle background music
+        function toggleMusic() {
+            musicOn = !musicOn;
+            musicGainNode.gain.value = musicOn ? 0.1 : 0;
+            document.getElementById('toggle-music').textContent = musicOn ? '🎵' : '🔇';
+        }
+        
+        // Toggle sound effects
+        function toggleSfx() {
+            sfxOn = !sfxOn;
+            sfxGainNode.gain.value = sfxOn ? 1 : 0;
+            document.getElementById('toggle-sfx').textContent = sfxOn ? '🔊' : '🔇';
+        }
+        
+        // Play sound effect
+        function playSfx(type, frequency = 440, duration = 0.5) {
+            if (!sfxOn || !audioContext) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
                 oscillator.connect(gainNode);
-                gainNode.connect(this.audioCtx.destination);
-
-                switch (type) {
-                    case 'spawn':
+                gainNode.connect(sfxGainNode);
+                
+                // Different sound types
+                switch(type) {
+                    case 'cellBirth':
                         oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(880, now);
-                        gainNode.gain.setValueAtTime(0.15, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.2);
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(1046.5, audioContext.currentTime + 0.2);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
                         break;
-                    case 'eat':
-                        oscillator.type = 'square';
-                        oscillator.frequency.setValueAtTime(150, now);
-                        gainNode.gain.setValueAtTime(0.08, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.1);
-                        break;
-                    case 'death':
-                        oscillator.type = 'triangle';
-                        oscillator.frequency.setValueAtTime(220, now);
-                        oscillator.frequency.exponentialRampToValueAtTime(55, now + 0.5);
-                        gainNode.gain.setValueAtTime(0.2, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.5);
-                        break;
-                    case 'mutate':
-                        oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(600, now);
-                        oscillator.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
-                        oscillator.frequency.exponentialRampToValueAtTime(600, now + 0.2);
-                        gainNode.gain.setValueAtTime(0.25, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.3);
-                        break;
-                    case 'organism':
+                        
+                    case 'cellDeath':
                         oscillator.type = 'sawtooth';
-                        oscillator.frequency.setValueAtTime(200, now);
-                        oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.4);
-                        gainNode.gain.setValueAtTime(0.1, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.4);
+                        oscillator.frequency.setValueAtTime(392, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(130.81, audioContext.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
                         break;
-                    case 'biofilm':
+                        
+                    case 'adaptation':
                         oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(100, now);
-                        gainNode.gain.setValueAtTime(0.08, now);
-                        gainNode.gain.linearRampToValueAtTime(0.001, now + 0.5);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.5);
+                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(1318.51, audioContext.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
                         break;
+                        
+                    case 'food':
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        break;
+                        
                     case 'predation':
                         oscillator.type = 'square';
-                        oscillator.frequency.setValueAtTime(440, now);
-                        oscillator.frequency.exponentialRampToValueAtTime(220, now + 0.1);
-                        gainNode.gain.setValueAtTime(0.2, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.1);
+                        oscillator.frequency.setValueAtTime(246.94, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
                         break;
-                    case 'click':
+                        
+                    case 'organismForm':
+                        // Chord sound
+                        const osc2 = audioContext.createOscillator();
+                        const osc3 = audioContext.createOscillator();
+                        const gainNode2 = audioContext.createGain();
+                        const gainNode3 = audioContext.createGain();
+                        
                         oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(1000, now);
-                        gainNode.gain.setValueAtTime(0.05, now);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                        oscillator.start(now);
-                        oscillator.stop(now + 0.05);
-                        break;
+                        osc2.type = 'sine';
+                        osc3.type = 'sine';
+                        
+                        oscillator.frequency.value = 523.25;
+                        osc2.frequency.value = 659.25;
+                        osc3.frequency.value = 783.99;
+                        
+                        oscillator.connect(gainNode);
+                        osc2.connect(gainNode2);
+                        osc3.connect(gainNode3);
+                        
+                        gainNode.connect(sfxGainNode);
+                        gainNode2.connect(sfxGainNode);
+                        gainNode3.connect(sfxGainNode);
+                        
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                        
+                        gainNode2.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                        
+                        gainNode3.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode3.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                        
+                        oscillator.start();
+                        osc2.start();
+                        osc3.start();
+                        
+                        oscillator.stop(audioContext.currentTime + 1);
+                        osc2.stop(audioContext.currentTime + 1);
+                        osc3.stop(audioContext.currentTime + 1);
+                        return;
+                        
+                    default:
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = frequency;
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
                 }
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+                
+            } catch (e) {
+                console.log('Error playing sound:', e);
+            }
+        }
+        
+        // Create floating particles for background effect
+        function createFloatingParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random properties
+                const size = Math.random() * 5 + 2;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const delay = Math.random() * 15;
+                const duration = 15 + Math.random() * 15;
+                const opacity = Math.random() * 0.4 + 0.1;
+                
+                // Set styles
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}vw`;
+                particle.style.top = `${posY}vh`;
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                particle.style.opacity = opacity;
+                
+                // Random color based on colony colors
+                const colors = ['#ff3e3e', '#4cc9f0', '#3aec6d', '#9d4edd'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                particlesContainer.appendChild(particle);
             }
         }
 
-        // Main Three.js variables
-        let scene, camera, renderer, raycaster, mouse, directionalLight;
-        let audioController;
-        let cells = [];
-        let foodParticles = [];
-        let toxins = [];
-        let multicellularOrganisms = [];
-        let biofilms = [];
-        let simulationPaused = false;
-        let simulationSpeed = 1;
-        let simTime = 0;
-        let cycleCount = 1;
-        let dayTime = true;
-        let timeOfDay = 8; // 8 AM
-        let mutationRate = 5;
-        let cooperationChance = 10;
-        let predatorPressure = 15;
-        let lightIntensity = 70;
-        let foodSpawnRate = 50;
-        const simBounds = { x: 45, y: 45 };
-        
-        // Statistics
-        let stats = {
-            sexualReproduction: 0,
-            fragmentation: 0,
-            sporeProduction: 0,
-            specializedCells: 0
-        };
-        
-        // Colony counts and adaptations
-        const colonyCounts = { red: 0, blue: 0, green: 0 };
-        const colonyAdaptations = {
-            red: new Set(),
-            blue: new Set(),
-            green: new Set()
-        };
-        
-        // Available adaptations
-        const allAdaptations = [
-            { id: "adhesion", name: "Specialized Adhesion", description: "Cells produce adhesion proteins allowing them to form stable multicellular structures", effect: (cell) => { cell.userData.adhesionStrength = 2.0; } },
-            { id: "biofilm", name: "Biofilm Formation", description: "Cells secrete extracellular matrix forming protective biofilms", effect: (cell) => { cell.userData.biofilmProduction = true; } },
-            { id: "skeleton", name: "External Skeleton", description: "Cells develop protective external structures for defense", effect: (cell) => { cell.userData.defense += 30; cell.userData.speed *= 0.8; } },
-            { id: "specialization", name: "Cell Specialization", description: "Cells differentiate into specialized types with specific functions", effect: (cell) => { cell.userData.canSpecialize = true; } },
-            { id: "digestive", name: "Digestive System", description: "Development of specialized cells for efficient nutrient breakdown", effect: (cell) => { cell.userData.nutrientAbsorption *= 1.5; } },
-            { id: "transport", name: "Internal Transport", description: "Cells develop channels for nutrient distribution throughout colonies", effect: (cell) => { cell.userData.nutrientSharing = true; } },
-            { id: "sexual", name: "Sexual Reproduction", description: "Ability to exchange genetic material through conjugation", effect: (cell) => { cell.userData.canConjugate = true; } },
-            { id: "spore", name: "Spore Production", description: "Ability to form durable spores for survival in harsh conditions", effect: (cell) => { cell.userData.canSporulate = true; } },
-            { id: "communication", name: "Cell Communication", description: "Cells develop signaling mechanisms to coordinate behavior", effect: (cell) => { cell.userData.communicationRange = 5.0; } },
-            { id: "homeostasis", name: "Homeostasis", description: "Ability to maintain internal stability in changing environments", effect: (cell) => { cell.userData.environmentResistance += 20; } }
-        ];
-        
         // Initialize the simulation
         function init() {
-            audioController = new AudioController();
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 50;
+            initAudio();
+            createFloatingParticles();
             
-            const simElement = document.getElementById('simulation');
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(simElement.clientWidth, simElement.clientHeight);
-            renderer.setClearColor(0x1a1a2e, 1);
-            simElement.appendChild(renderer.domElement);
-
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
+            // Set up Three.js scene
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            renderer.setSize(document.getElementById('simulation').offsetWidth, document.getElementById('simulation').offsetHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('simulation').appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
             
-            directionalLight = new THREE.DirectionalLight(0xffdd00, 1);
+            const directionalLight = new THREE.DirectionalLight(0xffdd00, 1);
             directionalLight.position.set(50, 50, 50);
             scene.add(directionalLight);
             
-            setupEventListeners();
-            resetSimulation();
+            // Create initial cells
+            createInitialCells(scene);
+            
+            // Set up camera position
+            camera.position.z = 50;
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Simulate some events for audio demonstration
+                if (Math.random() < 0.01) {
+                    playRandomEventSound();
+                }
+                
+                renderer.render(scene, camera);
+            }
             
             animate();
-            setInterval(updateSimulation, 100);
-        }
-
-        function setupEventListeners() {
-            const handleUserInteraction = () => audioController.resumeContext();
             
-            document.getElementById('pause-btn').addEventListener('click', () => { handleUserInteraction(); audioController.playSound('click'); togglePause(); });
-            document.getElementById('reset-btn').addEventListener('click', () => { handleUserInteraction(); audioController.playSound('click'); resetSimulation(); });
-            document.getElementById('speed-slider').addEventListener('input', updateSimulationSpeed);
-            document.getElementById('light-slider').addEventListener('input', updateLightIntensity);
-            document.getElementById('food-slider').addEventListener('input', updateFoodSpawnRate);
-            document.getElementById('mutation-slider').addEventListener('input', updateMutationRate);
-            document.getElementById('cooperation-slider').addEventListener('input', updateCooperationChance);
-            document.getElementById('predator-slider').addEventListener('input', updatePredatorPressure);
-            document.getElementById('inspector-close-btn').addEventListener('click', () => { handleUserInteraction(); audioController.playSound('click'); hideInspector(); });
-            renderer.domElement.addEventListener('click', onCanvasClick);
-
+            // Set up event listeners for UI
+            setupEventListeners();
+        }
+        
+        // Play random event sound for demonstration
+        function playRandomEventSound() {
+            const events = ['cellBirth', 'cellDeath', 'food', 'predation', 'adaptation'];
+            const randomEvent = events[Math.floor(Math.random() * events.length)];
+            playSfx(randomEvent);
+        }
+        
+        // Create initial cells for the simulation
+        function createInitialCells(scene) {
+            const colonyColors = {
+                red: 0xff3e3e,
+                blue: 0x4cc9f0,
+                green: 0x3aec6d
+            };
+            
+            // Create cells for each colony
+            for (const colony in colonyColors) {
+                for (let i = 0; i < 10; i++) {
+                    const geometry = new THREE.SphereGeometry(1, 16, 16);
+                    const material = new THREE.MeshPhongMaterial({ 
+                        color: colonyColors[colony],
+                        shininess: 70,
+                        emissive: colonyColors[colony],
+                        emissiveIntensity: 0.1
+                    });
+                    
+                    const cell = new THREE.Mesh(geometry, material);
+                    
+                    // Random position
+                    cell.position.x = (Math.random() - 0.5) * 30;
+                    cell.position.y = (Math.random() - 0.5) * 30;
+                    
+                    scene.add(cell);
+                }
+            }
+            
+            // Create some food particles
+            for (let i = 0; i < 20; i++) {
+                const geometry = new THREE.SphereGeometry(0.5, 12, 12);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0xf2e86d,
+                    shininess: 30,
+                    emissive: 0xf2e86d,
+                    emissiveIntensity: 0.2
+                });
+                
+                const food = new THREE.Mesh(geometry, material);
+                
+                food.position.x = (Math.random() - 0.5) * 40;
+                food.position.y = (Math.random() - 0.5) * 40;
+                
+                scene.add(food);
+            }
+        }
+        
+        // Set up UI event listeners
+        function setupEventListeners() {
+            // Tab functionality
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', () => {
-                    handleUserInteraction();
-                    audioController.playSound('click');
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
                     tab.classList.add('active');
                     document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                    playSfx('food', 600, 0.1);
                 });
             });
             
+            // Adaptation details
             document.querySelectorAll('.adaptation').forEach(adapt => {
                 adapt.addEventListener('click', () => {
-                    handleUserInteraction();
-                    const adaptation = allAdaptations.find(a => a.id === adapt.id.replace('-adapt', ''));
-                    if (adaptation) {
-                        document.getElementById('adaptation-details').innerHTML = `<strong>${adaptation.name}</strong><br>${adaptation.description}`;
-                    }
+                    const adaptName = adapt.id.replace('-adapt', '');
+                    const adaptations = {
+                        adhesion: "Cells develop adhesion proteins allowing them to stick together and form multicellular structures.",
+                        biofilm: "Cells secrete extracellular matrix forming protective biofilms that resist environmental stresses.",
+                        skeleton: "Cells develop external skeletons for protection against predators and environmental challenges.",
+                        specialization: "Cells differentiate into specialized types with specific functions for improved efficiency.",
+                        digestive: "Specialized cells develop for efficient nutrient breakdown and absorption.",
+                        transport: "Cells develop internal channels for nutrient distribution throughout the colony.",
+                        sexual: "Ability to exchange genetic material through conjugation, increasing genetic diversity.",
+                        spore: "Cells form durable spores that can survive harsh conditions and germinate when favorable.",
+                        communication: "Cells develop signaling mechanisms to coordinate behavior and responses.",
+                        homeostasis: "Ability to maintain internal stability in changing environmental conditions."
+                    };
+                    
+                    document.getElementById('adaptation-details').innerHTML = `
+                        <strong>${adapt.textContent}</strong><br><br>
+                        ${adaptations[adaptName]}
+                    `;
+                    
+                    playSfx('adaptation');
                 });
             });
-             window.addEventListener('resize', onWindowResize);
-        }
-        
-        function createColony(color, count) {
-            const colonyColors = { red: 0xff3e3e, blue: 0x4cc9f0, green: 0x3aec6d };
             
-            for (let i = 0; i < count; i++) {
-                const geometry = new THREE.SphereGeometry(1, 16, 16);
-                const material = new THREE.MeshPhongMaterial({ color: colonyColors[color], shininess: 50 });
-                const cell = new THREE.Mesh(geometry, material);
-                
-                if (color === 'red') { cell.position.set(Math.random() * 20 - 30, Math.random() * 20 - 10, 0); } 
-                else if (color === 'blue') { cell.position.set(Math.random() * 20 - 10, Math.random() * 20 + 10, 0); } 
-                else { cell.position.set(Math.random() * 20 + 10, Math.random() * 20 - 10, 0); }
-                
-                cell.userData = {
-                    type: 'cell', colony: color, health: 100, energy: 50 + Math.random() * 50,
-                    age: 0, maxAge: 500 + Math.floor(Math.random() * 500), speed: 0.1 + Math.random() * 0.2,
-                    size: 1, defense: 10, nutrientAbsorption: 1.0, environmentResistance: 10,
-                    adhesionStrength: 1.0, communicationRange: 0, biofilmProduction: false,
-                    canSpecialize: false, specialization: 'basic', nutrientSharing: false,
-                    canConjugate: false, canSporulate: false, inOrganism: false,
-                    organismId: null, inBiofilm: false, biofilmId: null
-                };
-                
-                scene.add(cell);
-                cells.push(cell);
-            }
-            colonyCounts[color] += count;
-        }
-        
-        function spawnFood(count) {
-            for (let i = 0; i < count; i++) {
-                const geometry = new THREE.SphereGeometry(0.5, 12, 12);
-                const material = new THREE.MeshPhongMaterial({ color: 0xf2e86d, shininess: 30 });
-                const food = new THREE.Mesh(geometry, material);
-                food.position.set(Math.random() * 80 - 40, Math.random() * 80 - 40, Math.random() * 10 - 5);
-                food.userData = { type: 'food', energy: 20 + Math.random() * 30 };
-                scene.add(food);
-                foodParticles.push(food);
-            }
-        }
-        
-        // Update simulation logic
-        function updateSimulation() {
-            if (simulationPaused) return;
+            // Slider events
+            document.getElementById('speed-slider').addEventListener('input', function() {
+                document.getElementById('speed-value').textContent = this.value + 'x';
+                playSfx('food', 400 + (this.value * 100), 0.1);
+            });
             
-            updateTime();
+            document.getElementById('light-slider').addEventListener('input', function() {
+                document.getElementById('light-value').textContent = this.value + '%';
+                playSfx('food', 500 + (this.value * 5), 0.1);
+            });
             
-            cells.forEach(cell => {
-                cell.userData.age += 0.1 * simulationSpeed;
-                cell.userData.energy -= 0.05 * simulationSpeed;
-                applyEnvironmentalEffects(cell);
-                
-                if (cell.userData.inOrganism) return; // Organism handles movement
-                if (cell.userData.inBiofilm) { handleBiofilmBehavior(cell); return; }
-                
-                // Movement logic
-                if (Math.random() < 0.7 && foodParticles.length > 0) {
-                    let closestFood = foodParticles.reduce((prev, curr) => cell.position.distanceTo(prev.position) < cell.position.distanceTo(curr.position) ? prev : curr);
-                    const direction = new THREE.Vector3().subVectors(closestFood.position, cell.position).normalize();
-                    cell.position.add(direction.multiplyScalar(cell.userData.speed * simulationSpeed));
+            document.getElementById('food-slider').addEventListener('input', function() {
+                document.getElementById('food-value').textContent = this.value + '%';
+                playSfx('food', 600 + (this.value * 4), 0.1);
+            });
+            
+            document.getElementById('mutation-slider').addEventListener('input', function() {
+                document.getElementById('mutation-value').textContent = this.value + '%';
+                playSfx('food', 700 + (this.value * 3), 0.1);
+            });
+            
+            document.getElementById('cooperation-slider').addEventListener('input', function() {
+                document.getElementById('cooperation-value').textContent = this.value + '%';
+                playSfx('food', 800 + (this.value * 2), 0.1);
+            });
+            
+            // Button events
+            document.getElementById('pause-btn').addEventListener('click', function() {
+                this.textContent = this.textContent === '⏸️ Pause' ? '▶️ Resume' : '⏸️ Pause';
+                playSfx('food', 300, 0.2);
+            });
+            
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                if (confirm("Are you sure you want to reset the simulation?")) {
+                    // Reset logic would go here
+                    document.getElementById('event-log').innerHTML = '<div class="event">Simulation reset</div>';
+                    playSfx('cellDeath', 200, 0.5);
                 } else {
-                    cell.position.x += (Math.random() - 0.5) * cell.userData.speed * simulationSpeed;
-                    cell.position.y += (Math.random() - 0.5) * cell.userData.speed * simulationSpeed;
-                }
-
-                // Boundary Wrapping
-                if (cell.position.x > simBounds.x) cell.position.x = -simBounds.x;
-                if (cell.position.x < -simBounds.x) cell.position.x = simBounds.x;
-                if (cell.position.y > simBounds.y) cell.position.y = -simBounds.y;
-                if (cell.position.y < -simBounds.y) cell.position.y = simBounds.y;
-                
-                // Interactions
-                for (let i = foodParticles.length - 1; i >= 0; i--) {
-                    const food = foodParticles[i];
-                    if (cell.position.distanceTo(food.position) < 1.5) {
-                        cell.userData.energy += food.userData.energy * cell.userData.nutrientAbsorption;
-                        scene.remove(food);
-                        foodParticles.splice(i, 1);
-                        audioController.playSound('eat');
-                        break;
-                    }
-                }
-                
-                cells.forEach(otherCell => {
-                    if (cell !== otherCell && cell.position.distanceTo(otherCell.position) < 2.5) {
-                        handleCellInteractions(cell, otherCell);
-                    }
-                });
-                
-                if (cell.userData.energy > 150) reproduceCell(cell);
-                if (cell.userData.energy <= 0 || cell.userData.age > cell.userData.maxAge) handleCellDeath(cell);
-            });
-            
-            updateMulticellularOrganisms();
-            updateBiofilms();
-            
-            if (Math.random() < (foodSpawnRate / 100) * 0.1 * simulationSpeed) {
-                spawnFood(1);
-            }
-            
-            simTime += 0.1 * simulationSpeed;
-            updateStatistics();
-        }
-        
-        function handleCellInteractions(cell, otherCell) {
-            // Predation
-            if (cell.userData.colony !== otherCell.userData.colony && Math.random() < predatorPressure / 1000) {
-                if (Math.random() < (cell.userData.defense / (cell.userData.defense + otherCell.userData.defense))) {
-                    cell.userData.energy += otherCell.userData.energy * 0.5;
-                    addEvent(`A ${cell.userData.colony} cell consumed a ${otherCell.userData.colony} cell!`);
-                    handleCellDeath(otherCell); // Prey is killed
-                    audioController.playSound('predation');
-                }
-            }
-            
-            // Multicellular formation
-            if (cell.userData.colony === otherCell.userData.colony && !cell.userData.inOrganism && !otherCell.userData.inOrganism &&
-                cell.userData.adhesionStrength > 1.0 && otherCell.userData.adhesionStrength > 1.0 && Math.random() < cooperationChance / 1000) {
-                formMulticellularOrganism([cell, otherCell]);
-            }
-            
-            // Biofilm formation
-            if (cell.userData.colony === otherCell.userData.colony && !cell.userData.inBiofilm && !otherCell.userData.inBiofilm &&
-                cell.userData.biofilmProduction && otherCell.userData.biofilmProduction && Math.random() < 0.005) {
-                formBiofilm([cell, otherCell]);
-            }
-            
-            // Conjugation
-            if (cell.userData.colony === otherCell.userData.colony && cell.userData.canConjugate && otherCell.userData.canConjugate && Math.random() < 0.001) {
-                conjugateCells(cell, otherCell);
-            }
-        }
-        
-        function reproduceCell(cell) {
-            cell.userData.energy /= 2;
-            const newCell = cell.clone();
-            newCell.position.x += (Math.random() - 0.5) * 2;
-            newCell.position.y += (Math.random() - 0.5) * 2;
-            newCell.userData = {...cell.userData, energy: cell.userData.energy, age: 0};
-            
-            if (Math.random() < mutationRate / 100) mutateCell(newCell);
-            
-            scene.add(newCell);
-            cells.push(newCell);
-            colonyCounts[cell.userData.colony]++;
-            audioController.playSound('spawn');
-        }
-        
-        function handleCellDeath(cell) {
-            if (cell.parent) { // Check if not already removed
-                if (cell.userData.inOrganism) {
-                    const organism = multicellularOrganisms.find(o => o.id === cell.userData.organismId);
-                    if (organism) {
-                        organism.cells = organism.cells.filter(c => c !== cell);
-                        organism.energy -= 20;
-                        if (organism.cells.length < 2) dissolveOrganism(organism);
-                    }
-                }
-                
-                if (cell.userData.canSporulate && Math.random() < 0.3) {
-                    produceSpores(cell);
-                }
-                
-                scene.remove(cell);
-                const index = cells.indexOf(cell);
-                if (index > -1) cells.splice(index, 1);
-                colonyCounts[cell.userData.colony]--;
-                audioController.playSound('death');
-                
-                if (Math.random() < 0.3) spawnFood(1);
-            }
-        }
-        
-        function formMulticellularOrganism(initialCells) {
-            const organismId = THREE.MathUtils.generateUUID();
-            const color = initialCells[0].userData.colony;
-            
-            const envelopeGeometry = new THREE.SphereGeometry(1, 16, 16);
-            const envelopeMaterial = new THREE.MeshPhongMaterial({
-                color: {red: 0xff3e3e, blue: 0x4cc9f0, green: 0x3aec6d}[color],
-                transparent: true, opacity: 0.2
-            });
-            const envelope = new THREE.Mesh(envelopeGeometry, envelopeMaterial);
-            scene.add(envelope);
-
-            const organism = {
-                id: organismId, colony: color, cells: initialCells,
-                energy: initialCells.reduce((sum, c) => sum + c.userData.energy, 0),
-                position: new THREE.Vector3().copy(initialCells[0].position),
-                speed: 0.05, age: 0, envelope: envelope
-            };
-            
-            initialCells.forEach(cell => {
-                cell.userData.inOrganism = true;
-                cell.userData.organismId = organismId;
-                if (cell.userData.canSpecialize) {
-                    cell.userData.specialization = Math.random() < 0.5 ? 'digestive' : 'sensory';
-                    cell.material.color.set(cell.userData.specialization === 'digestive' ? 0xff9900 : 0x9900ff);
-                    stats.specializedCells++;
+                    playSfx('food', 400, 0.1);
                 }
             });
             
-            multicellularOrganisms.push(organism);
-            audioController.playSound('organism');
-            addEvent(`A new multicellular organism formed in the ${color} colony!`);
-        }
-
-        function dissolveOrganism(organism) {
-            organism.cells.forEach(cell => {
-                cell.userData.inOrganism = false;
-                cell.userData.organismId = null;
-            });
-            scene.remove(organism.envelope);
-            multicellularOrganisms = multicellularOrganisms.filter(o => o.id !== organism.id);
-        }
-        
-        function formBiofilm(initialCells) {
-            const biofilmId = THREE.MathUtils.generateUUID();
-            const color = initialCells[0].userData.colony;
-            const biofilm = {
-                id: biofilmId, colony: color, cells: initialCells,
-                position: new THREE.Vector3().copy(initialCells[0].position)
-            };
-            initialCells.forEach(cell => {
-                cell.userData.inBiofilm = true;
-                cell.userData.biofilmId = biofilmId;
-                cell.material.color.set(0x888888);
-            });
-            biofilms.push(biofilm);
-            audioController.playSound('biofilm');
-            addEvent(`A new biofilm formed in the ${color} colony!`);
-        }
-        
-        function conjugateCells(cell1, cell2) {
-            const adaptations1 = allAdaptations.filter(a => colonyAdaptations[cell1.userData.colony].has(a.id));
-            const adaptations2 = allAdaptations.filter(a => colonyAdaptations[cell2.userData.colony].has(a.id));
-            
-            adaptations2.forEach(a => { if (Math.random() < 0.5) colonyAdaptations[cell1.userData.colony].add(a.id); a.effect(cell1); });
-            adaptations1.forEach(a => { if (Math.random() < 0.5) colonyAdaptations[cell2.userData.colony].add(a.id); a.effect(cell2); });
-
-            stats.sexualReproduction++;
-            updateColonyAdaptations();
-            addEvent(`Cells in the ${cell1.userData.colony} colony exchanged genetic material!`);
-        }
-        
-        function produceSpores(cell) {
-            addEvent(`${cell.userData.colony} cell released spores upon death.`);
-            stats.sporeProduction++;
-        }
-
-        function handleBiofilmBehavior(cell) {
-            cell.userData.energy -= 0.02 * simulationSpeed;
-            if (cell.userData.energy < 50 && foodParticles.length > 0) {
-                cell.userData.energy += 0.5 * simulationSpeed;
-            }
-        }
-
-        function applyEnvironmentalEffects(cell) {
-            if (dayTime) {
-                cell.userData.energy += 0.1 * (lightIntensity / 100) * simulationSpeed;
-            } else {
-                cell.userData.energy -= 0.1 * simulationSpeed;
-            }
-            const energyChange = (50 - cell.userData.environmentResistance) * 0.001;
-            cell.userData.energy -= energyChange * simulationSpeed;
-            if (cell.userData.energy > 200) cell.userData.energy = 200;
-        }
-        
-        function updateMulticellularOrganisms() {
-            for (let i = multicellularOrganisms.length - 1; i >= 0; i--) {
-                const organism = multicellularOrganisms[i];
-                if (organism.cells.length < 2) {
-                    dissolveOrganism(organism);
-                    continue;
+            // Simulate some events for demonstration
+            setInterval(() => {
+                // Random events
+                if (Math.random() < 0.1) {
+                    addEvent("Cell divided");
+                    playSfx('cellBirth');
                 }
-
-                organism.age += 0.1 * simulationSpeed;
-                organism.energy -= 0.02 * organism.cells.length * simulationSpeed;
                 
-                // Movement
-                let target = null;
-                if (Math.random() < 0.8 && foodParticles.length > 0) {
-                    target = foodParticles.reduce((prev, curr) => organism.position.distanceTo(prev.position) < organism.position.distanceTo(curr.position) ? prev : curr).position;
-                } else {
-                    target = organism.position.clone().add(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5), 0));
+                if (Math.random() < 0.05) {
+                    addEvent("Cell died");
+                    playSfx('cellDeath');
                 }
-                const direction = new THREE.Vector3().subVectors(target, organism.position).normalize();
-                organism.position.add(direction.multiplyScalar(organism.speed * simulationSpeed));
-
-                // Boundary Wrapping for Organisms
-                if (organism.position.x > simBounds.x) organism.position.x = -simBounds.x;
-                if (organism.position.x < -simBounds.x) organism.position.x = simBounds.x;
-                if (organism.position.y > simBounds.y) organism.position.y = -simBounds.y;
-                if (organism.position.y < -simBounds.y) organism.position.y = simBounds.y;
-
-                // Update cell and envelope positions
-                const angleIncrement = (Math.PI * 2) / organism.cells.length;
-                const radius = 1.5 * Math.sqrt(organism.cells.length);
-                organism.cells.forEach((cell, index) => {
-                    const angle = angleIncrement * index;
-                    cell.position.set(
-                        organism.position.x + Math.cos(angle) * radius * 0.7,
-                        organism.position.y + Math.sin(angle) * radius * 0.7,
-                        organism.position.z
-                    );
-                });
-                organism.envelope.position.copy(organism.position);
-                organism.envelope.scale.set(radius, radius, radius);
                 
-                if (organism.energy <= 0) {
-                    addEvent(`A ${organism.colony} organism died and released its cells!`);
-                    dissolveOrganism(organism);
+                if (Math.random() < 0.03) {
+                    addEvent("Food consumed");
+                    playSfx('food');
                 }
-            }
-        }
-        
-        function updateBiofilms() {
-            for (let i = biofilms.length - 1; i >= 0; i--) {
-                const biofilm = biofilms[i];
-                cells.forEach(cell => {
-                    if (cell.userData.colony === biofilm.colony && !cell.userData.inBiofilm && cell.userData.biofilmProduction) {
-                        if (cell.position.distanceTo(biofilm.position) < 5) {
-                            cell.userData.inBiofilm = true;
-                            cell.userData.biofilmId = biofilm.id;
-                            cell.material.color.set(0x888888);
-                            biofilm.cells.push(cell);
+                
+                if (Math.random() < 0.02) {
+                    addEvent("Predation occurred");
+                    playSfx('predation');
+                }
+                
+                if (Math.random() < 0.01) {
+                    addEvent("New adaptation evolved!");
+                    playSfx('adaptation');
+                    
+                    // Randomly activate an adaptation visually
+                    const adaptations = document.querySelectorAll('.adaptation');
+                    if (Math.random() < 0.3) {
+                        const randomAdapt = adaptations[Math.floor(Math.random() * adaptations.length)];
+                        if (!randomAdapt.classList.contains('active')) {
+                            randomAdapt.classList.add('active');
                         }
                     }
-                });
-
-                if (Math.random() < 0.0005 * simulationSpeed) {
-                    dissolveBiofilm(biofilm);
                 }
-            }
-        }
-
-        function fragmentOrganism(organism) {
-            if (organism.cells.length > 4) {
-                const splitIndex = Math.floor(organism.cells.length / 2);
-                const newOrganismCells = organism.cells.splice(splitIndex);
-                formMulticellularOrganism(newOrganismCells);
-                stats.fragmentation++;
-                addEvent(`${organism.colony} organism fragmented, creating a new organism.`);
-            }
-        }
-
-        function dissolveBiofilm(biofilm) {
-            biofilm.cells.forEach(cell => {
-                cell.userData.inBiofilm = false;
-                cell.userData.biofilmId = null;
-                const colonyColors = { red: 0xff3e3e, blue: 0x4cc9f0, green: 0x3aec6d };
-                cell.material.color.set(colonyColors[cell.userData.colony]);
-            });
-            const index = biofilms.indexOf(biofilm);
-            if (index > -1) biofilms.splice(index, 1);
-            addEvent(`A ${biofilm.colony} biofilm dissolved.`);
-        }
-        
-        function mutateCell(cell) {
-            const currentAdaptations = colonyAdaptations[cell.userData.colony];
-            const availableAdaptations = allAdaptations.filter(a => !currentAdaptations.has(a.id));
-            if (availableAdaptations.length > 0) {
-                const newAdaptation = availableAdaptations[Math.floor(Math.random() * availableAdaptations.length)];
-                newAdaptation.effect(cell);
-                currentAdaptations.add(newAdaptation.id);
-                updateColonyAdaptations();
-                audioController.playSound('mutate');
-                addEvent(`${cell.userData.colony.toUpperCase()} colony evolved ${newAdaptation.name}!`);
-            }
-        }
-        
-        function updateTime() {
-            timeOfDay += 0.05 * simulationSpeed;
-            if (timeOfDay >= 24) {
-                timeOfDay = 0;
-                cycleCount++;
-                if (Math.random() < 0.1) {
-                    addEvent("A catastrophic event wiped out some cells!");
-                    const toRemove = Math.floor(cells.length * 0.3);
-                    for (let i = 0; i < toRemove; i++) {
-                        const randIndex = Math.floor(Math.random() * cells.length);
-                        if (cells[randIndex]) handleCellDeath(cells[randIndex]);
-                    }
+                
+                if (Math.random() < 0.005) {
+                    addEvent("Multicellular organism formed!");
+                    playSfx('organismForm');
                 }
-            }
-
-            const timeDisplay = document.querySelector('.environment div:nth-child(3)');
-            timeDisplay.textContent = `Time: ${String(Math.floor(timeOfDay)).padStart(2, '0')}:00`;
-            const sunMoon = document.querySelector('.sun-moon');
-            const cycleDisplay = document.querySelector('.time-display');
-
-            if (timeOfDay > 6 && timeOfDay < 20) { // Day
-                if (!dayTime) {
-                    dayTime = true;
-                    addEvent("Daybreak. Photosynthesis is now possible.");
-                }
-                sunMoon.classList.remove('moon');
-                cycleDisplay.textContent = `Cycle ${cycleCount}: Day`;
-                directionalLight.intensity = 0.5 + (lightIntensity / 100) * 1.5;
-            } else { // Night
-                if (dayTime) {
-                    dayTime = false;
-                    addEvent("Nightfall. Energy consumption increases.");
-                }
-                sunMoon.classList.add('moon');
-                cycleDisplay.textContent = `Cycle ${cycleCount}: Night`;
-                directionalLight.intensity = 0.2;
-            }
-
-            if (Math.random() < 0.001 * simulationSpeed && cells.length > 0) {
-                const randomCell = cells[Math.floor(Math.random() * cells.length)];
-                mutateCell(randomCell);
-            }
+            }, 2000);
         }
         
-        function updateStatistics() {
-            document.getElementById('sim-time').textContent = Math.floor(simTime);
-            document.getElementById('total-cells').textContent = cells.length;
-            document.getElementById('food-count').textContent = foodParticles.length;
-            document.getElementById('organism-count').textContent = multicellularOrganisms.length;
-            document.getElementById('specialized-cells').textContent = stats.specializedCells;
-            document.getElementById('sexual-reproduction').textContent = stats.sexualReproduction;
-            document.getElementById('fragmentation').textContent = stats.fragmentation;
-            document.getElementById('spore-count').textContent = stats.sporeProduction;
-            document.getElementById('cycle-count').textContent = cycleCount;
-            document.getElementById('biofilm-count').textContent = biofilms.length;
-
-            let largestOrganism = 0;
-            multicellularOrganisms.forEach(org => { if (org.cells.length > largestOrganism) largestOrganism = org.cells.length; });
-            document.getElementById('largest-organism').textContent = largestOrganism;
-            updateColonyCounts();
-        }
-        
-        function updateColonyCounts() {
-            document.getElementById('red-count').textContent = colonyCounts.red;
-            document.getElementById('blue-count').textContent = colonyCounts.blue;
-            document.getElementById('green-count').textContent = colonyCounts.green;
-        }
-        
-        function updateColonyAdaptations() {
-            document.getElementById('red-adaptations').textContent = colonyAdaptations.red.size;
-            document.getElementById('blue-adaptations').textContent = colonyAdaptations.blue.size;
-            document.getElementById('green-adaptations').textContent = colonyAdaptations.green.size;
-            
-            allAdaptations.forEach(adapt => {
-                document.querySelector(`#${adapt.id}-adapt .dot.red`).classList.toggle('active', colonyAdaptations.red.has(adapt.id));
-                document.querySelector(`#${adapt.id}-adapt .dot.blue`).classList.toggle('active', colonyAdaptations.blue.has(adapt.id));
-                document.querySelector(`#${adapt.id}-adapt .dot.green`).classList.toggle('active', colonyAdaptations.green.has(adapt.id));
-            });
-        }
-        
+        // Add event to log
         function addEvent(message) {
-            const eventLogContainer = document.getElementById('event-log');
-            if (!eventLogContainer) return;
-
+            const eventLog = document.getElementById('event-log');
             const eventElement = document.createElement('div');
             eventElement.className = 'event';
-            const timestamp = `[${cycleCount}:${String(Math.floor(timeOfDay)).padStart(2, '0')}]`;
-            eventElement.textContent = `${timestamp} ${message}`;
-
-            eventLogContainer.appendChild(eventElement);
-            eventLogContainer.scrollTop = eventLogContainer.scrollHeight;
-
-            if (eventLogContainer.children.length > 150) {
-                eventLogContainer.removeChild(eventLogContainer.firstChild);
+            eventElement.textContent = message;
+            eventLog.appendChild(eventElement);
+            
+            // Keep only the last 10 events
+            while (eventLog.children.length > 10) {
+                eventLog.removeChild(eventLog.firstChild);
             }
-        }
-
-        function togglePause() {
-            simulationPaused = !simulationPaused;
-            const pauseBtn = document.getElementById('pause-btn');
-            pauseBtn.textContent = simulationPaused ? 'Resume' : 'Pause';
-            addEvent(`Simulation ${simulationPaused ? 'paused' : 'resumed'}.`);
+            
+            // Auto-scroll to bottom
+            eventLog.scrollTop = eventLog.scrollHeight;
         }
         
-        function resetSimulation() {
-            cells.forEach(c => scene.remove(c));
-            foodParticles.forEach(f => scene.remove(f));
-            multicellularOrganisms.forEach(o => scene.remove(o.envelope));
-            
-            cells = []; foodParticles = []; toxins = [];
-            multicellularOrganisms = []; biofilms = [];
-            
-            Object.keys(colonyCounts).forEach(k => colonyCounts[k] = 0);
-            Object.keys(colonyAdaptations).forEach(k => colonyAdaptations[k] = new Set());
-            Object.keys(stats).forEach(k => stats[k] = 0);
-            
-            simTime = 0; cycleCount = 1; timeOfDay = 8; dayTime = true;
-            
-            createColony('red', 12); createColony('blue', 15); createColony('green', 8);
-            spawnFood(20);
-            
-            updateColonyAdaptations();
-            updateStatistics();
-            
-            const eventLog = document.getElementById('event-log');
-            eventLog.innerHTML = '';
-            addEvent("Simulation reset");
-        }
+        // Initialize the simulation when the page loads
+        window.addEventListener('load', init);
         
-        function onCanvasClick(event) {
-            audioController.resumeContext();
-            const simElement = document.getElementById('simulation');
-            const rect = simElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(cells);
-            if (intersects.length > 0) {
-                showInspector(intersects[0].object);
-            }
-        }
-
-        function showInspector(cell) {
-            const data = cell.userData;
-            document.getElementById('inspector-title').textContent = `${data.colony.charAt(0).toUpperCase() + data.colony.slice(1)} Cell`;
-            document.getElementById('inspector-colony').textContent = data.colony;
-            document.getElementById('inspector-health').textContent = Math.round(data.health);
-            document.getElementById('inspector-energy').textContent = Math.round(data.energy);
-            document.getElementById('inspector-age').textContent = Math.round(data.age);
-            let status = 'Single';
-            if (data.inOrganism) status = `Organism (${multicellularOrganisms.find(o => o.id === data.organismId)?.cells.length || 'N/A'} cells)`;
-            if (data.inBiofilm) status = 'Biofilm';
-            document.getElementById('inspector-status').textContent = status;
-            
-            const adaptationsHtml = allAdaptations
-                .filter(a => colonyAdaptations[data.colony].has(a.id))
-                .map(a => `<div>- ${a.name}</div>`).join('');
-            document.getElementById('inspector-adaptations').innerHTML = adaptationsHtml ? `<strong>Adaptations:</strong>${adaptationsHtml}` : 'No adaptations.';
-
-            document.getElementById('inspector-panel').classList.remove('hidden');
-        }
-
-        function hideInspector() {
-            document.getElementById('inspector-panel').classList.add('hidden');
-        }
-
-        function updateSimulationSpeed(e) { simulationSpeed = parseFloat(e.target.value); document.getElementById('speed-value').textContent = simulationSpeed.toFixed(1) + 'x'; }
-        
-        function updateLightIntensity(e) {
-            lightIntensity = parseInt(e.target.value);
-            document.getElementById('light-value').textContent = lightIntensity + '%';
-        }
-
-        function updateFoodSpawnRate(e) {
-            foodSpawnRate = parseInt(e.target.value);
-            document.getElementById('food-value').textContent = foodSpawnRate + '%';
-        }
-
-        function updateMutationRate(e) { mutationRate = parseInt(e.target.value); document.getElementById('mutation-value').textContent = mutationRate + '%'; }
-        function updateCooperationChance(e) { cooperationChance = parseInt(e.target.value); document.getElementById('cooperation-value').textContent = cooperationChance + '%'; }
-        function updatePredatorPressure(e) { predatorPressure = parseInt(e.target.value); document.getElementById('predator-value').textContent = predatorPressure + '%'; }
-        
-        function animate() {
-            requestAnimationFrame(animate);
-            cells.forEach(cell => { cell.rotation.x += 0.01; cell.rotation.y += 0.01; });
-            foodParticles.forEach(food => { food.rotation.x += 0.02; food.rotation.y += 0.02; });
-            renderer.render(scene, camera);
-        }
-        
-        function onWindowResize() {
-            const simElement = document.getElementById('simulation');
-            if(simElement.clientWidth > 0 && simElement.clientHeight > 0) {
-                camera.aspect = simElement.clientWidth / simElement.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(simElement.clientWidth, simElement.clientHeight);
-            }
-        }
-        
-        init();
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            // Resize logic would go here
+        });
     </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
