@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolutionary Cellular Colony Simulator with Audio</title>
+    <title>Cellular Colony Evolution Simulator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
@@ -477,7 +477,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>Evolutionary Cellular Colony Simulator</h1>
+            <h1>Cellular Colony Evolution Simulator</h1>
             <div class="subtitle">Witness the emergence of complex life from simple beginnings</div>
         </header>
         
@@ -697,6 +697,17 @@
     </div>
 
     <script>
+        // Main Three.js variables
+        let scene, camera, renderer;
+        let cells = [];
+        let foodParticles = [];
+        let simulationPaused = false;
+        let simulationSpeed = 1;
+        let simTime = 0;
+        let cycleCount = 1;
+        let dayTime = true;
+        let timeOfDay = 8;
+        
         // Audio context and settings
         let audioContext;
         let musicGainNode;
@@ -930,9 +941,9 @@
             createFloatingParticles();
             
             // Set up Three.js scene
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             
             renderer.setSize(document.getElementById('simulation').offsetWidth, document.getElementById('simulation').offsetHeight);
             renderer.setClearColor(0x000000, 0);
@@ -947,38 +958,23 @@
             scene.add(directionalLight);
             
             // Create initial cells
-            createInitialCells(scene);
+            createInitialCells();
+            
+            // Create some food particles
+            spawnFood(20);
             
             // Set up camera position
             camera.position.z = 50;
             
-            // Animation loop
-            function animate() {
-                requestAnimationFrame(animate);
-                
-                // Simulate some events for audio demonstration
-                if (Math.random() < 0.01) {
-                    playRandomEventSound();
-                }
-                
-                renderer.render(scene, camera);
-            }
-            
-            animate();
-            
             // Set up event listeners for UI
             setupEventListeners();
-        }
-        
-        // Play random event sound for demonstration
-        function playRandomEventSound() {
-            const events = ['cellBirth', 'cellDeath', 'food', 'predation', 'adaptation'];
-            const randomEvent = events[Math.floor(Math.random() * events.length)];
-            playSfx(randomEvent);
+            
+            // Start animation loop
+            animate();
         }
         
         // Create initial cells for the simulation
-        function createInitialCells(scene) {
+        function createInitialCells() {
             const colonyColors = {
                 red: 0xff3e3e,
                 blue: 0x4cc9f0,
@@ -987,7 +983,9 @@
             
             // Create cells for each colony
             for (const colony in colonyColors) {
-                for (let i = 0; i < 10; i++) {
+                const count = colony === 'red' ? 12 : colony === 'blue' ? 15 : 8;
+                
+                for (let i = 0; i < count; i++) {
                     const geometry = new THREE.SphereGeometry(1, 16, 16);
                     const material = new THREE.MeshPhongMaterial({ 
                         color: colonyColors[colony],
@@ -998,16 +996,39 @@
                     
                     const cell = new THREE.Mesh(geometry, material);
                     
-                    // Random position
-                    cell.position.x = (Math.random() - 0.5) * 30;
-                    cell.position.y = (Math.random() - 0.5) * 30;
+                    // Random position based on colony
+                    if (colony === 'red') {
+                        cell.position.x = Math.random() * 20 - 30;
+                        cell.position.y = Math.random() * 20 - 10;
+                    } else if (colony === 'blue') {
+                        cell.position.x = Math.random() * 20;
+                        cell.position.y = Math.random() * 20;
+                    } else {
+                        cell.position.x = Math.random() * 20 + 10;
+                        cell.position.y = Math.random() * 20 - 30;
+                    }
+                    
+                    // Add userData for simulation properties
+                    cell.userData = {
+                        type: 'cell',
+                        colony: colony,
+                        health: 100,
+                        energy: 50 + Math.random() * 50,
+                        age: 0,
+                        maxAge: 500 + Math.floor(Math.random() * 500),
+                        speed: 0.1 + Math.random() * 0.2,
+                        size: 1
+                    };
                     
                     scene.add(cell);
+                    cells.push(cell);
                 }
             }
-            
-            // Create some food particles
-            for (let i = 0; i < 20; i++) {
+        }
+        
+        // Spawn food particles
+        function spawnFood(count) {
+            for (let i = 0; i < count; i++) {
                 const geometry = new THREE.SphereGeometry(0.5, 12, 12);
                 const material = new THREE.MeshPhongMaterial({ 
                     color: 0xf2e86d,
@@ -1018,11 +1039,213 @@
                 
                 const food = new THREE.Mesh(geometry, material);
                 
-                food.position.x = (Math.random() - 0.5) * 40;
-                food.position.y = (Math.random() - 0.5) * 40;
+                food.position.x = Math.random() * 80 - 40;
+                food.position.y = Math.random() * 80 - 40;
+                food.position.z = Math.random() * 10 - 5;
+                
+                food.userData = {
+                    type: 'food',
+                    energy: 20 + Math.random() * 30
+                };
                 
                 scene.add(food);
+                foodParticles.push(food);
             }
+            
+            document.getElementById('food-count').textContent = foodParticles.length;
+        }
+        
+        // Update simulation logic
+        function updateSimulation() {
+            if (simulationPaused) return;
+            
+            // Update time of day and day/night cycle
+            updateTime();
+            
+            // Move cells and update their state
+            cells.forEach(cell => {
+                // Age the cell
+                cell.userData.age += 0.1 * simulationSpeed;
+                
+                // Consume energy
+                cell.userData.energy -= 0.05 * simulationSpeed;
+                
+                // Move toward food or random direction
+                if (Math.random() < 0.7 && foodParticles.length > 0) {
+                    // Find closest food
+                    let closestFood = null;
+                    let closestDistance = Infinity;
+                    
+                    foodParticles.forEach(food => {
+                        const distance = cell.position.distanceTo(food.position);
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestFood = food;
+                        }
+                    });
+                    
+                    if (closestFood) {
+                        // Move toward food
+                        const direction = new THREE.Vector3()
+                            .subVectors(closestFood.position, cell.position)
+                            .normalize();
+                        
+                        cell.position.add(direction.multiplyScalar(cell.userData.speed * simulationSpeed));
+                    }
+                } else {
+                    // Random movement
+                    cell.position.x += (Math.random() - 0.5) * cell.userData.speed * simulationSpeed;
+                    cell.position.y += (Math.random() - 0.5) * cell.userData.speed * simulationSpeed;
+                }
+                
+                // Check for food consumption
+                for (let i = foodParticles.length - 1; i >= 0; i--) {
+                    const food = foodParticles[i];
+                    if (cell.position.distanceTo(food.position) < 1.5) {
+                        cell.userData.energy += food.userData.energy;
+                        scene.remove(food);
+                        foodParticles.splice(i, 1);
+                        document.getElementById('food-count').textContent = foodParticles.length;
+                        playSfx('food');
+                        break;
+                    }
+                }
+                
+                // Check for reproduction
+                if (cell.userData.energy > 150) {
+                    cell.userData.energy /= 2;
+                    
+                    const geometry = new THREE.SphereGeometry(cell.userData.size, 16, 16);
+                    const material = new THREE.MeshPhongMaterial({ 
+                        color: cell.material.color,
+                        shininess: 70,
+                        emissive: cell.material.color,
+                        emissiveIntensity: 0.1
+                    });
+                    
+                    const newCell = new THREE.Mesh(geometry, material);
+                    newCell.position.copy(cell.position);
+                    newCell.position.x += (Math.random() - 0.5) * 2;
+                    newCell.position.y += (Math.random() - 0.5) * 2;
+                    
+                    newCell.userData = {
+                        type: 'cell',
+                        colony: cell.userData.colony,
+                        health: 100,
+                        energy: cell.userData.energy,
+                        age: 0,
+                        maxAge: 500 + Math.floor(Math.random() * 500),
+                        speed: cell.userData.speed,
+                        size: cell.userData.size
+                    };
+                    
+                    scene.add(newCell);
+                    cells.push(newCell);
+                    
+                    // Update colony count
+                    const colonyCountElement = document.getElementById(`${cell.userData.colony}-count`);
+                    colonyCountElement.textContent = parseInt(colonyCountElement.textContent) + 1;
+                    
+                    document.getElementById('total-cells').textContent = cells.length;
+                    playSfx('cellBirth');
+                }
+                
+                // Check for death
+                if (cell.userData.energy <= 0 || cell.userData.age > cell.userData.maxAge) {
+                    scene.remove(cell);
+                    cells.splice(cells.indexOf(cell), 1);
+                    
+                    // Update colony count
+                    const colonyCountElement = document.getElementById(`${cell.userData.colony}-count`);
+                    colonyCountElement.textContent = parseInt(colonyCountElement.textContent) - 1;
+                    
+                    document.getElementById('total-cells').textContent = cells.length;
+                    playSfx('cellDeath');
+                    
+                    // Sometimes spawn food when a cell dies
+                    if (Math.random() < 0.3) {
+                        spawnFood(1);
+                    }
+                }
+            });
+            
+            // Update stats
+            simTime += 0.1 * simulationSpeed;
+            document.getElementById('sim-time').textContent = Math.floor(simTime);
+        }
+        
+        // Update time of day and day/night cycle
+        function updateTime() {
+            timeOfDay += 0.01 * simulationSpeed;
+            if (timeOfDay >= 24) {
+                timeOfDay = 0;
+                cycleCount++;
+                document.getElementById('cycle-count').textContent = cycleCount;
+            }
+            
+            // Update sun/moon indicator
+            const sunMoon = document.querySelector('.sun-moon');
+            const timeDisplay = document.querySelector('.time-display');
+            
+            if (timeOfDay > 6 && timeOfDay < 20) {
+                // Day time
+                if (!dayTime) {
+                    dayTime = true;
+                    timeDisplay.textContent = 'Cycle: Day';
+                    sunMoon.classList.remove('moon');
+                }
+                
+                // Adjust light intensity based on time of day
+                const intensity = Math.sin((timeOfDay - 6) / 14 * Math.PI) * 0.8 + 0.2;
+                scene.children.forEach(child => {
+                    if (child instanceof THREE.DirectionalLight) {
+                        child.intensity = intensity;
+                    }
+                });
+            } else {
+                // Night time
+                if (dayTime) {
+                    dayTime = false;
+                    timeDisplay.textContent = 'Cycle: Night';
+                    sunMoon.classList.add('moon');
+                }
+                
+                // Adjust light intensity for night
+                const intensity = 0.1;
+                scene.children.forEach(child => {
+                    if (child instanceof THREE.DirectionalLight) {
+                        child.intensity = intensity;
+                    }
+                });
+            }
+            
+            // Update time display
+            const hours = Math.floor(timeOfDay);
+            const minutes = Math.floor((timeOfDay - hours) * 60);
+            document.querySelector('.environment div:last-child').textContent = 
+                `Time: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate cells and food slightly for visual effect
+            cells.forEach(cell => {
+                cell.rotation.x += 0.01;
+                cell.rotation.y += 0.01;
+            });
+            
+            foodParticles.forEach(food => {
+                food.rotation.x += 0.02;
+                food.rotation.y += 0.02;
+            });
+            
+            // Update simulation logic
+            updateSimulation();
+            
+            // Render the scene
+            renderer.render(scene, camera);
         }
         
         // Set up UI event listeners
@@ -1067,6 +1290,7 @@
             
             // Slider events
             document.getElementById('speed-slider').addEventListener('input', function() {
+                simulationSpeed = parseFloat(this.value);
                 document.getElementById('speed-value').textContent = this.value + 'x';
                 playSfx('food', 400 + (this.value * 100), 0.1);
             });
@@ -1093,13 +1317,52 @@
             
             // Button events
             document.getElementById('pause-btn').addEventListener('click', function() {
-                this.textContent = this.textContent === '⏸️ Pause' ? '▶️ Resume' : '⏸️ Pause';
+                simulationPaused = !simulationPaused;
+                this.textContent = simulationPaused ? '▶️ Resume' : '⏸️ Pause';
                 playSfx('food', 300, 0.2);
             });
             
             document.getElementById('reset-btn').addEventListener('click', function() {
                 if (confirm("Are you sure you want to reset the simulation?")) {
-                    // Reset logic would go here
+                    // Reset the simulation
+                    while(scene.children.length > 0) { 
+                        scene.remove(scene.children[0]); 
+                    }
+                    
+                    cells = [];
+                    foodParticles = [];
+                    
+                    // Recreate lights
+                    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                    scene.add(ambientLight);
+                    
+                    const directionalLight = new THREE.DirectionalLight(0xffdd00, 1);
+                    directionalLight.position.set(50, 50, 50);
+                    scene.add(directionalLight);
+                    
+                    // Recreate cells and food
+                    createInitialCells();
+                    spawnFood(20);
+                    
+                    // Reset counters
+                    document.getElementById('red-count').textContent = '12';
+                    document.getElementById('blue-count').textContent = '15';
+                    document.getElementById('green-count').textContent = '8';
+                    document.getElementById('total-cells').textContent = '35';
+                    document.getElementById('food-count').textContent = '20';
+                    document.getElementById('sim-time').textContent = '0';
+                    document.getElementById('cycle-count').textContent = '1';
+                    
+                    // Reset time
+                    simTime = 0;
+                    cycleCount = 1;
+                    timeOfDay = 8;
+                    dayTime = true;
+                    
+                    document.querySelector('.time-display').textContent = 'Cycle: Day';
+                    document.querySelector('.sun-moon').classList.remove('moon');
+                    document.querySelector('.environment div:last-child').textContent = 'Time: 08:00';
+                    
                     document.getElementById('event-log').innerHTML = '<div class="event">Simulation reset</div>';
                     playSfx('cellDeath', 200, 0.5);
                 } else {
@@ -1140,6 +1403,12 @@
                         const randomAdapt = adaptations[Math.floor(Math.random() * adaptations.length)];
                         if (!randomAdapt.classList.contains('active')) {
                             randomAdapt.classList.add('active');
+                            
+                            // Update adaptation count for a random colony
+                            const colonies = ['red', 'blue', 'green'];
+                            const randomColony = colonies[Math.floor(Math.random() * colonies.length)];
+                            const adaptCountElement = document.getElementById(`${randomColony}-adaptations`);
+                            adaptCountElement.textContent = parseInt(adaptCountElement.textContent) + 1;
                         }
                     }
                 }
@@ -1173,7 +1442,9 @@
         
         // Handle window resize
         window.addEventListener('resize', function() {
-            // Resize logic would go here
+            camera.aspect = document.getElementById('simulation').offsetWidth / document.getElementById('simulation').offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(document.getElementById('simulation').offsetWidth, document.getElementById('simulation').offsetHeight);
         });
     </script>
 </body>
